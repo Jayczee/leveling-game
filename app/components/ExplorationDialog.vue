@@ -30,14 +30,6 @@
               {{ currentExplorationAreaInfo?.description }}
             </p>
 
-            <!-- 探险进度条 -->
-            <div class="w-full bg-ink-200 rounded-full h-3 mb-2">
-              <div
-                class="bg-gold-400 h-3 rounded-full transition-all duration-1000"
-                :style="{ width: explorationProgress + '%' }"
-              ></div>
-            </div>
-
             <p class="text-sm text-ink-600 mb-4">
               剩余时间: {{ formatTime(explorationTimeRemaining / 1000) }}
             </p>
@@ -87,7 +79,9 @@
 </template>
 
 <script setup lang="ts">
-import { EXPLORATION_AREAS, RANDOM_EVENTS, GAME_CONFIG } from '~/utils/constants'
+import { GAME_CONFIG } from '~/utils/constants'
+import { EXPLORATION_AREAS } from '~/utils/exploration-areas'
+import { RANDOM_EVENTS } from '~/utils/exploration-events'
 
 // Props
 interface Props {
@@ -103,6 +97,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const gameStore = useGameStore()
+const characterStore = useCharacterStore()
 const { formatTime } = useTimeFormatter()
 const { handleExplorationComplete } = useGameEvents()
 
@@ -112,18 +107,20 @@ const currentTime = ref(Date.now())
 // 计算属性
 const currentExplorationAreaInfo = computed(() => gameStore.currentExplorationAreaInfo)
 
+// 获取实际探险时间（只受游戏速度影响，不受时光法宝影响）
+const actualExplorationTime = computed(() => {
+  return GAME_CONFIG.EXPLORATION_TIME / gameStore.gameSpeed
+})
+
+// 计算探险剩余时间（使用响应式currentTime确保实时更新）
 const explorationTimeRemaining = computed(() => {
   if (!gameStore.isExploring) return 0
   const elapsed = currentTime.value - gameStore.explorationStartTime
-  return Math.max(0, GAME_CONFIG.EXPLORATION_TIME - elapsed)
+  const remaining = Math.max(0, actualExplorationTime.value - elapsed)
+  return remaining
 })
 
-// 探险进度百分比
-const explorationProgress = computed(() => {
-  if (!gameStore.isExploring) return 0
-  const elapsed = currentTime.value - gameStore.explorationStartTime
-  return Math.min(100, (elapsed / GAME_CONFIG.EXPLORATION_TIME) * 100)
-})
+
 
 // 定时器更新当前时间
 let progressTimer: NodeJS.Timeout | null = null
@@ -134,6 +131,15 @@ watch(() => gameStore.isExploring, (isExploring) => {
     // 开始探险时启动进度更新定时器
     progressTimer = setInterval(() => {
       currentTime.value = Date.now()
+
+      // 检查探险是否完成
+      if (explorationTimeRemaining.value <= 0) {
+        handleExplorationComplete()
+        if (progressTimer) {
+          clearInterval(progressTimer)
+          progressTimer = null
+        }
+      }
     }, 100)
   } else {
     // 探险结束时清除定时器
@@ -163,16 +169,7 @@ function getAreaEventNames(eventConfigs: any[]): string[] {
 
 // 开始探险
 function startExploration(areaKey: string) {
-  const success = gameStore.startExploration(areaKey as keyof typeof EXPLORATION_AREAS)
-  if (success) {
-    // 设置定时器检查探险完成
-    const checkInterval = setInterval(() => {
-      if (gameStore.isExplorationComplete) {
-        handleExplorationComplete()
-        clearInterval(checkInterval)
-      }
-    }, 100)
-  }
+  gameStore.startExploration(areaKey as keyof typeof EXPLORATION_AREAS)
 }
 
 // 取消探险

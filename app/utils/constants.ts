@@ -31,47 +31,46 @@ export const TALENTS = {
   },
   LUCKY_STAR: {
     id: 'lucky_star',
-    name: '福星高照',
-    description: '探险获得稀有物品几率提升100%',
+    name: '气运加身',
+    description: '探险获得稀有物品几率提升33%',
     effects: {
-      luckBonus: 2.0
+      luckBonus: 1.33
     }
   }
 } as const
 
-// 境界系统
-export const REALMS = {
-  MORTAL: {
-    id: 'mortal',
-    name: '凡人',
-    maxLevel: 0,
-    description: '未踏入修行之路的凡人'
+// 修炼方向系统
+export const CULTIVATION_PATHS = {
+  QI_CULTIVATION: {
+    id: 'qi_cultivation',
+    name: '练气',
+    description: '专注于灵气修炼，法术威力强大',
+    effects: {
+      spiritualQiEfficiency: 1.75,  // 灵气获得效率
+      constitutionGrowthRate: 0.33  // 体质成长率
+    }
   },
-  QI_REFINING: {
-    id: 'qi_refining',
-    name: '练气期',
-    maxLevel: 12,
-    description: '初入修行，炼化天地灵气'
+  BODY_CULTIVATION: {
+    id: 'body_cultivation',
+    name: '炼体',
+    description: '专注于肉身修炼，体魄强健无比',
+    effects: {
+      constitutionGrowthRate: 1.5,   // 体质成长率
+      spiritualQiEfficiency: 0.2    // 灵气获得效率
+    }
   },
-  FOUNDATION: {
-    id: 'foundation',
-    name: '筑基期',
-    maxLevel: 9,
-    description: '筑建修行根基，脱胎换骨'
-  },
-  GOLDEN_CORE: {
-    id: 'golden_core',
-    name: '金丹期',
-    maxLevel: 9,
-    description: '凝结金丹，寿元大增'
-  },
-  NASCENT_SOUL: {
-    id: 'nascent_soul',
-    name: '元婴期',
-    maxLevel: 9,
-    description: '元婴出窍，神通广大'
+  DUAL_CULTIVATION: {
+    id: 'dual_cultivation',
+    name: '双修',
+    description: '练气炼体并重，均衡发展',
+    effects: {
+      spiritualQiEfficiency: 0.75,  // 灵气获得效率
+      constitutionGrowthRate: 0.75  // 体质成长率
+    }
   }
 } as const
+
+
 
 // 修炼活动
 export const ACTIVITIES = {
@@ -98,187 +97,11 @@ export const ACTIVITIES = {
   }
 } as const
 
-// 奖励配置接口
-export interface RewardConfig {
-  spiritualQi?: { range: [number, number], probability: number }
-  experience?: { range: [number, number], probability: number }
-  spiritualStones?: { range: [number, number], probability: number }
-}
 
-// 探险事件配置
-export interface ExplorationEvent {
-  id: string
-  name: string
-  description: string
-}
 
-// 区域事件配置（包含概率和奖励）
-export interface AreaEventConfig {
-  eventId: string
-  probability: number  // 事件触发概率 (0-1)
-  rewards: RewardConfig
-}
 
-// 探险区域配置
-export interface ExplorationAreaConfig {
-  id: string
-  name: string
-  description: string
-  level: number
-  events: AreaEventConfig[]
-  maxEvents: number  // 单次探险最大事件数量
-}
 
-// 探险区域
-export const EXPLORATION_AREAS: Record<string, ExplorationAreaConfig> = {
-  BAMBOO_FOREST: {
-    id: 'bamboo_forest',
-    name: '竹林小径',
-    description: '清幽竹林，偶有灵草',
-    level: 1,
-    maxEvents: 2,
-    events: [
-      {
-        eventId: 'find_herb',
-        probability: 0.6,
-        rewards: {
-          spiritualQi: { range: [40, 60], probability: 0.8 },
-          experience: { range: [8, 12], probability: 0.9 }
-        }
-      },
-      {
-        eventId: 'meet_animal',
-        probability: 0.4,
-        rewards: {
-          spiritualQi: { range: [25, 35], probability: 0.7 },
-          experience: { range: [12, 18], probability: 0.8 }
-        }
-      },
-      {
-        eventId: 'peaceful_meditation',
-        probability: 0.3,
-        rewards: {
-          experience: { range: [20, 30], probability: 0.9 }
-        }
-      }
-    ]
-  },
-  MISTY_MOUNTAIN: {
-    id: 'misty_mountain',
-    name: '云雾山峰',
-    description: '云雾缭绕，灵气浓郁',
-    level: 2,
-    maxEvents: 3,
-    events: [
-      {
-        eventId: 'find_spirit_stone',
-        probability: 0.3,
-        rewards: {
-          spiritualStones: { range: [1, 1], probability: 0.9 },
-          spiritualQi: { range: [80, 120], probability: 0.8 }
-        }
-      },
-      {
-        eventId: 'encounter_beast',
-        probability: 0.5,
-        rewards: {
-          experience: { range: [40, 60], probability: 0.8 },
-          spiritualQi: { range: [70, 90], probability: 0.7 }
-        }
-      },
-      {
-        eventId: 'discover_cave',
-        probability: 0.2,
-        rewards: {
-          spiritualStones: { range: [1, 3], probability: 0.6 },
-          spiritualQi: { range: [180, 220], probability: 0.9 }
-        }
-      }
-    ]
-  },
-  ANCIENT_RUINS: {
-    id: 'ancient_ruins',
-    name: '古迹遗址',
-    description: '古老遗迹，藏有秘宝',
-    level: 3,
-    maxEvents: 2,
-    events: [
-      {
-        eventId: 'find_artifact',
-        probability: 0.2,
-        rewards: {
-          spiritualStones: { range: [4, 6], probability: 0.7 },
-          experience: { range: [90, 110], probability: 0.8 }
-        }
-      },
-      {
-        eventId: 'trigger_formation',
-        probability: 0.4,
-        rewards: {
-          experience: { range: [70, 90], probability: 0.8 },
-          spiritualQi: { range: [140, 160], probability: 0.7 }
-        }
-      },
-      {
-        eventId: 'ancient_inheritance',
-        probability: 0.1,
-        rewards: {
-          experience: { range: [180, 220], probability: 0.9 },
-          spiritualStones: { range: [2, 4], probability: 0.6 }
-        }
-      }
-    ]
-  }
-} as const
 
-// 随机事件配置
-export const RANDOM_EVENTS: Record<string, ExplorationEvent> = {
-  find_herb: {
-    id: 'find_herb',
-    name: '发现灵草',
-    description: '在路边发现了一株灵草'
-  },
-  meet_animal: {
-    id: 'meet_animal',
-    name: '遇见灵兽',
-    description: '遇到了一只温顺的灵兽，获得了它的祝福'
-  },
-  peaceful_meditation: {
-    id: 'peaceful_meditation',
-    name: '静心冥想',
-    description: '在宁静的环境中冥想，心境得到提升'
-  },
-  find_spirit_stone: {
-    id: 'find_spirit_stone',
-    name: '发现灵石',
-    description: '在山洞中发现了一块灵石'
-  },
-  encounter_beast: {
-    id: 'encounter_beast',
-    name: '遭遇妖兽',
-    description: '遭遇妖兽，经过一番搏斗后获胜'
-  },
-  discover_cave: {
-    id: 'discover_cave',
-    name: '发现洞府',
-    description: '发现了一个隐秘的洞府，获得了一些修炼资源'
-  },
-  find_artifact: {
-    id: 'find_artifact',
-    name: '发现法器',
-    description: '在遗迹中发现了一件古老的法器'
-  },
-  trigger_formation: {
-    id: 'trigger_formation',
-    name: '触发阵法',
-    description: '意外触发了古老的阵法，获得了阵法的感悟'
-  },
-  ancient_inheritance: {
-    id: 'ancient_inheritance',
-    name: '古老传承',
-    description: '获得了古老的修炼传承，修为大增'
-  }
-} as const
 
 // 时光法宝品质
 export enum TimeTreasureQuality {
@@ -303,7 +126,7 @@ export const TIME_TREASURES: Record<string, TimeTreasure> = {
   BRONZE_HOURGLASS: {
     id: 'bronze_hourglass',
     name: '青铜沙漏',
-    description: '古老的青铜沙漏，能够轻微加速时间流逝',
+    description: '古老的青铜沙漏，能够加速修炼进程',
     quality: TimeTreasureQuality.COMMON,
     speedMultiplier: 1.5,
     icon: '⏳'
@@ -311,7 +134,7 @@ export const TIME_TREASURES: Record<string, TimeTreasure> = {
   SILVER_CHRONOMETER: {
     id: 'silver_chronometer',
     name: '白银时计',
-    description: '精致的白银时计，蕴含着时间的奥秘',
+    description: '精致的白银时计，大幅提升修炼效率',
     quality: TimeTreasureQuality.RARE,
     speedMultiplier: 2.0,
     icon: '⏰'
@@ -322,84 +145,40 @@ export const TIME_TREASURES: Record<string, TimeTreasure> = {
 export const GAME_CONFIG = {
   // 基础属性点数
   INITIAL_ATTRIBUTE_POINTS: 10,
-  
+
   // 挂机间隔（毫秒）
   IDLE_INTERVAL: 1000,
-  
-  // 升级所需经验基数
-  LEVEL_EXP_BASE: 100,
-  LEVEL_EXP_MULTIPLIER: 1.5,
-  
-  // 突破成功率基础值
-  BREAKTHROUGH_BASE_CHANCE: 0.6,
-  
+
   // 探险时间（毫秒）
   EXPLORATION_TIME: 5000,
-  
+
   // 存档数量限制
   MAX_SAVE_SLOTS: 5
 } as const
 
-// 计算升级所需经验
-export function getRequiredExp(level: number): number {
-  return Math.floor(GAME_CONFIG.LEVEL_EXP_BASE * Math.pow(GAME_CONFIG.LEVEL_EXP_MULTIPLIER, level - 1))
-}
 
-// 生成随机奖励
-export function generateRandomRewards(rewardConfig: RewardConfig): Record<string, number> {
-  const rewards: Record<string, number> = {}
 
-  if (rewardConfig.spiritualQi && Math.random() < rewardConfig.spiritualQi.probability) {
-    const [min, max] = rewardConfig.spiritualQi.range
-    rewards.spiritualQi = Math.floor(Math.random() * (max - min + 1)) + min
+
+
+
+
+
+
+// 计算衍生属性
+export function calculateDerivedAttributes(constitution: number, spiritualPower: number) {
+  // 基础值 + 属性加成
+  const mana = 5 + spiritualPower * 2  // 基础法力5点，每1点灵力增加2法力
+  const divineStrength = 5 + constitution * 1  // 基础神力5点，每1点体质增加1神力
+  const physicalDefense = 10 + constitution * 0.4 + spiritualPower * 0.1  // 基础物防10点，每1点体质增加0.4，每1点灵力增加0.1
+  const magicalDefense = 10 + constitution * 0.2 + spiritualPower * 0.5  // 基础法防10点，每1点体质增加0.2，每1点灵力增加0.5
+  const maxHealth = 50 + constitution * 5  // 基础生命值50点，每1点体质增加5生命值
+
+  return {
+    mana: Math.floor(mana),
+    divineStrength: Math.floor(divineStrength),
+    physicalDefense: Math.floor(physicalDefense * 10) / 10, // 保留一位小数
+    magicalDefense: Math.floor(magicalDefense * 10) / 10,   // 保留一位小数
+    health: Math.floor(maxHealth),
+    maxHealth: Math.floor(maxHealth)
   }
-
-  if (rewardConfig.experience && Math.random() < rewardConfig.experience.probability) {
-    const [min, max] = rewardConfig.experience.range
-    rewards.experience = Math.floor(Math.random() * (max - min + 1)) + min
-  }
-
-  if (rewardConfig.spiritualStones && Math.random() < rewardConfig.spiritualStones.probability) {
-    const [min, max] = rewardConfig.spiritualStones.range
-    rewards.spiritualStones = Math.floor(Math.random() * (max - min + 1)) + min
-  }
-
-  return rewards
-}
-
-// 处理探险事件
-export function processExplorationEvents(areaConfig: ExplorationAreaConfig): Array<{event: ExplorationEvent, rewards: Record<string, number>}> {
-  const triggeredEvents: Array<{event: ExplorationEvent, rewards: Record<string, number>}> = []
-
-  // 随机打乱事件顺序
-  const shuffledEvents = [...areaConfig.events].sort(() => Math.random() - 0.5)
-
-  for (const eventConfig of shuffledEvents) {
-    // 检查是否达到最大事件数量
-    if (triggeredEvents.length >= areaConfig.maxEvents) break
-
-    // 检查事件是否触发
-    if (Math.random() < eventConfig.probability) {
-      const event = RANDOM_EVENTS[eventConfig.eventId]
-      if (event) {
-        const rewards = generateRandomRewards(eventConfig.rewards)
-        triggeredEvents.push({ event, rewards })
-      }
-    }
-  }
-
-  return triggeredEvents
-}
-
-// 计算属性对修炼速度的影响
-export function getCultivationSpeedMultiplier(constitution: number, spiritualPower: number, comprehension: number): number {
-  return 1 + (constitution * 0.05) + (spiritualPower * 0.1) + (comprehension * 0.08)
-}
-
-// 计算突破成功率
-export function getBreakthroughChance(comprehension: number, currentLevel: number): number {
-  const baseChance = GAME_CONFIG.BREAKTHROUGH_BASE_CHANCE
-  const comprehensionBonus = comprehension * 0.02
-  const levelPenalty = currentLevel * 0.01
-  return Math.max(0.1, Math.min(0.95, baseChance + comprehensionBonus - levelPenalty))
 }

@@ -55,15 +55,11 @@ export function useGameLoop() {
   // 页面可见性变化处理
   function handleVisibilityChange() {
     if (document.hidden) {
-      // 页面隐藏时暂停游戏
-      if (isRunning.value) {
-        gameStore.pauseGame()
-      }
+      // 页面隐藏时记录时间，但不暂停游戏循环
+      gameStore.recordHiddenTime()
     } else {
-      // 页面显示时恢复游戏
-      if (characterStore.character && !gameStore.isPlaying) {
-        gameStore.startGame()
-      }
+      // 页面显示时计算离线时间并应用离线收益
+      gameStore.processOfflineTime()
     }
   }
 
@@ -167,13 +163,10 @@ export function useGameEvents() {
     if (result && characterStore.character) {
       // 应用总奖励
       if (result.totalRewards.spiritualQi) {
-        characterStore.gainResources({ spiritualQi: result.totalRewards.spiritualQi })
+        characterStore.gainQiExperience(result.totalRewards.spiritualQi)
       }
       if (result.totalRewards.spiritualStones) {
-        characterStore.gainResources({ spiritualStones: result.totalRewards.spiritualStones })
-      }
-      if (result.totalRewards.experience) {
-        characterStore.gainExperience(result.totalRewards.experience)
+        characterStore.gainBodyExperience(result.totalRewards.spiritualStones)
       }
 
       // 如果有奖励，显示奖励信息
@@ -186,31 +179,13 @@ export function useGameEvents() {
   // 格式化奖励文本
   function formatRewards(rewards: any): string {
     const parts = []
-    if (rewards.spiritualQi) parts.push(`灵气+${rewards.spiritualQi}`)
-    if (rewards.spiritualStones) parts.push(`灵石+${rewards.spiritualStones}`)
-    if (rewards.experience) parts.push(`经验+${rewards.experience}`)
+    if (rewards.spiritualQi) parts.push(`练气经验+${rewards.spiritualQi}`)
+    if (rewards.spiritualStones) parts.push(`炼体经验+${rewards.spiritualStones}`)
     return parts.join(', ')
-  }
-
-  // 尝试突破
-  function attemptBreakthrough() {
-    if (!characterStore.character || !characterStore.canBreakthrough) return false
-
-    const success = characterStore.attemptBreakthrough()
-    
-    if (success) {
-      const realm = characterStore.currentRealm
-      gameStore.addMessage(`突破成功！进入${realm?.name}境界`, 'success')
-    } else {
-      gameStore.addMessage('突破失败，继续努力修炼吧', 'warning')
-    }
-
-    return success
   }
 
   return {
     handleExplorationComplete,
-    formatRewards,
-    attemptBreakthrough
+    formatRewards
   }
 }

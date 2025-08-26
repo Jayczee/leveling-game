@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen flex items-center justify-center p-4 safe-area-inset-top safe-area-inset-bottom">
-    <div class="max-w-4xl w-full">
+    <div class="max-w-4xl w-full mx-auto">
       <!-- 游戏标题 -->
       <div class="text-center mb-8 md:mb-12 fade-in">
         <h1 class="text-4xl md:text-6xl font-serif font-bold text-ink-800 mb-2 md:mb-4">
@@ -70,7 +70,7 @@
               </div>
 
               <div class="text-xs md:text-sm text-ink-600 space-y-1">
-                <p>境界：{{ getRealmName(save.character.cultivation.realm) }} {{ save.character.cultivation.level }}层</p>
+                <p>练气：{{ save.character.cultivation.qiCultivation.level }}级 | 炼体：{{ save.character.cultivation.bodyCultivation.level }}级</p>
                 <p>游戏时间：{{ formatTime(save.playTime) }}</p>
                 <p class="hidden md:block">最后游戏：{{ formatDate(save.lastPlayedAt) }}</p>
               </div>
@@ -91,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-import { REALMS } from '~/utils/constants'
+
 
 // 页面元数据
 definePageMeta({
@@ -114,11 +114,7 @@ const canCreateNewSave = computed(() => saveStore.canCreateNewSave)
 const maxSaves = computed(() => saveStore.getSaveStats().maxSaves)
 const totalPlayTime = computed(() => saveStore.getSaveStats().totalPlayTime)
 
-// 获取境界名称
-function getRealmName(realmKey: string) {
-  const realm = REALMS[realmKey as keyof typeof REALMS]
-  return realm ? realm.name : '未知'
-}
+
 
 // 创建新游戏
 function createNewGame() {

@@ -50,7 +50,7 @@
           <span class="text-2xl">⏰</span>
           <div class="text-left">
             <div class="font-medium text-ink-800">时光法宝</div>
-            <div class="text-sm text-ink-600">装备法宝加速修炼</div>
+            <div class="text-sm text-ink-600">装备法宝提升修炼效率</div>
           </div>
         </button>
       </div>

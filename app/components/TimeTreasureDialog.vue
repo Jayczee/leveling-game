@@ -30,7 +30,7 @@
                 {{ getQualityName(currentTimeTreasure.quality) }}
               </span>
               <span class="text-sm font-medium text-gold-600">
-                {{ currentTimeTreasure.speedMultiplier }}x 加速
+                修炼 {{ currentTimeTreasure.speedMultiplier }}x 加速
               </span>
             </div>
             <button
@@ -69,7 +69,7 @@
                   </div>
                   <p class="text-sm text-ink-600 mb-1">{{ treasure.description }}</p>
                   <p class="text-sm font-medium text-gold-600">
-                    加速效果: {{ treasure.speedMultiplier }}x
+                    修炼加速: {{ treasure.speedMultiplier }}x
                   </p>
                 </div>
               </div>

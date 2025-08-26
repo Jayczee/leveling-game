@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台修炼测试</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        .success {
+            border-left-color: #28a745;
+            background-color: #d4edda;
+        }
+        .warning {
+            border-left-color: #ffc107;
+            background-color: #fff3cd;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background-color: #f8d7da;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>后台修炼测试</h1>
+        <p>这个页面用于测试修仙游戏的后台修炼功能是否正常工作。</p>
+        
+        <div class="status" id="status">
+            <strong>状态：</strong>准备测试
+        </div>
+        
+        <div>
+            <button onclick="startTest()">开始测试</button>
+            <button onclick="simulateTabSwitch()">模拟切换标签页</button>
+            <button onclick="checkGameState()">检查游戏状态</button>
+        </div>
+        
+        <div class="test-results" id="results">
+            <h3>测试结果：</h3>
+            <div id="test-log"></div>
+        </div>
+        
+        <div class="status">
+            <h3>测试说明：</h3>
+            <ol>
+                <li>首先在游戏中创建角色并开始修炼</li>
+                <li>点击"开始测试"按钮</li>
+                <li>点击"模拟切换标签页"来测试后台运行</li>
+                <li>观察游戏是否继续在后台进行修炼</li>
+                <li>切换回游戏标签页，查看是否有离线收益消息</li>
+            </ol>
+        </div>
+        
+        <div class="status warning">
+            <strong>注意：</strong>请确保游戏页面已经打开并且角色正在进行修炼活动。
+        </div>
+    </div>
+
+    <script>
+        let testStartTime = 0;
+        let isTestRunning = false;
+        
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.innerHTML = `<strong>状态：</strong>${message}`;
+            statusEl.className = `status ${type}`;
+        }
+        
+        function addLog(message) {
+            const logEl = document.getElementById('test-log');
+            const timestamp = new Date().toLocaleTimeString();
+            logEl.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        }
+        
+        function startTest() {
+            testStartTime = Date.now();
+            isTestRunning = true;
+            updateStatus('测试已开始，请切换到游戏标签页确认修炼正在进行', 'success');
+            addLog('测试开始 - 请确保游戏中角色正在修炼');
+        }
+        
+        function simulateTabSwitch() {
+            if (!isTestRunning) {
+                updateStatus('请先开始测试', 'warning');
+                return;
+            }
+            
+            updateStatus('模拟切换标签页 - 游戏应该在后台继续运行', 'warning');
+            addLog('模拟切换到其他标签页，游戏应该继续在后台修炼');
+            
+            // 模拟页面隐藏事件
+            Object.defineProperty(document, 'hidden', {
+                writable: true,
+                value: true
+            });
+            
+            // 触发 visibilitychange 事件
+            const event = new Event('visibilitychange');
+            document.dispatchEvent(event);
+            
+            addLog('已触发页面隐藏事件，游戏应该记录隐藏时间但继续运行');
+            
+            // 5秒后模拟返回
+            setTimeout(() => {
+                Object.defineProperty(document, 'hidden', {
+                    writable: true,
+                    value: false
+                });
+                
+                const showEvent = new Event('visibilitychange');
+                document.dispatchEvent(showEvent);
+                
+                updateStatus('模拟返回游戏标签页 - 应该显示离线收益', 'success');
+                addLog('已模拟返回游戏标签页，应该处理离线时间并显示收益');
+            }, 5000);
+        }
+        
+        function checkGameState() {
+            addLog('请手动检查游戏状态：');
+            addLog('1. 游戏是否显示了离线收益消息？');
+            addLog('2. 角色经验是否有增长？');
+            addLog('3. 游戏时间是否正常累计？');
+            updateStatus('请手动检查游戏状态', 'info');
+        }
+        
+        // 监听页面可见性变化
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                addLog('页面已隐藏 - 游戏应该继续在后台运行');
+            } else {
+                addLog('页面已显示 - 游戏应该处理离线时间');
+            }
+        });
+    </script>
+</body>
+</html>

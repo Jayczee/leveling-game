@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
-import { ACTIVITIES, EXPLORATION_AREAS, RANDOM_EVENTS, GAME_CONFIG, processExplorationEvents } from '~/utils/constants'
+import { ACTIVITIES, GAME_CONFIG } from '~/utils/constants'
+import { EXPLORATION_AREAS } from '~/utils/exploration-areas'
+import { processExplorationEvents } from '~/utils/exploration-utils'
 
 export type ActivityType = keyof typeof ACTIVITIES
 export type ExplorationArea = keyof typeof EXPLORATION_AREAS
@@ -13,6 +15,7 @@ export interface GameState {
   explorationArea: ExplorationArea | null
   explorationStartTime: number
   messages: GameMessage[]
+  hiddenTime: number // 页面隐藏时的时间戳
 }
 
 export interface GameMessage {
@@ -31,7 +34,8 @@ export const useGameStore = defineStore('game', {
     isExploring: false,
     explorationArea: null,
     explorationStartTime: 0,
-    messages: []
+    messages: [],
+    hiddenTime: 0
   }),
 
   getters: {
@@ -47,17 +51,20 @@ export const useGameStore = defineStore('game', {
       return EXPLORATION_AREAS[state.explorationArea]
     },
 
-    // 计算探险剩余时间
+    // 计算探险剩余时间（只受游戏速度影响）
     explorationTimeRemaining: (state) => {
       if (!state.isExploring) return 0
       const elapsed = Date.now() - state.explorationStartTime
-      return Math.max(0, GAME_CONFIG.EXPLORATION_TIME - elapsed)
+      const actualExplorationTime = GAME_CONFIG.EXPLORATION_TIME / state.gameSpeed
+      return Math.max(0, actualExplorationTime - elapsed)
     },
 
     // 检查探险是否完成
     isExplorationComplete: (state) => {
       if (!state.isExploring) return false
-      return Date.now() - state.explorationStartTime >= GAME_CONFIG.EXPLORATION_TIME
+      const elapsed = Date.now() - state.explorationStartTime
+      const actualExplorationTime = GAME_CONFIG.EXPLORATION_TIME / state.gameSpeed
+      return elapsed >= actualExplorationTime
     }
   },
 
@@ -87,6 +94,11 @@ export const useGameStore = defineStore('game', {
       }
     },
 
+    // 获取实际探险时间（只受游戏速度影响，不受时光法宝影响）
+    getActualExplorationTime() {
+      return GAME_CONFIG.EXPLORATION_TIME / this.gameSpeed
+    },
+
     // 开始探险
     startExploration(area: ExplorationArea) {
       if (this.isExploring) return false
@@ -94,15 +106,12 @@ export const useGameStore = defineStore('game', {
       this.isExploring = true
       this.explorationArea = area
       this.explorationStartTime = Date.now()
-      
+
       const areaInfo = EXPLORATION_AREAS[area]
       if (!areaInfo) return false
       this.addMessage(`前往${areaInfo.name}探险`, 'info')
-      
-      // 设置探险完成的定时器
-      setTimeout(() => {
-        this.completeExploration()
-      }, GAME_CONFIG.EXPLORATION_TIME)
+
+      // 不再使用定时器自动完成，由UI组件检查完成状态
 
       return true
     },
@@ -174,8 +183,6 @@ export const useGameStore = defineStore('game', {
 
     // 更新游戏状态
     updateGame() {
-      if (!this.isPlaying) return
-
       const now = Date.now()
       const deltaTime = (now - this.lastUpdateTime) / 1000 // 转换为秒
       this.lastUpdateTime = now
@@ -186,8 +193,8 @@ export const useGameStore = defineStore('game', {
       // 增加游戏时间
       characterStore.addPlayTime(deltaTime)
 
-      // 处理当前活动
-      if (this.currentActivity) {
+      // 处理当前活动（只有在游戏运行状态下才处理活动）
+      if (this.isPlaying && this.currentActivity) {
         this.processActivity(deltaTime)
       }
     },
@@ -204,19 +211,22 @@ export const useGameStore = defineStore('game', {
 
       switch (activity.type) {
         case 'cultivation':
-          // 修炼获得经验和灵气
-          const expGain = baseGain * characterStore.cultivationSpeedMultiplier
-          const qiGain = baseGain * 10 * characterStore.cultivationSpeedMultiplier
-          
-          characterStore.gainExperience(expGain)
-          characterStore.gainResources({ spiritualQi: qiGain })
+          // 修炼获得练气经验，直接使用修炼方向的灵气获取效率
+          const cultivationPath = characterStore.getCurrentCultivationPath()
+          const qiEfficiency = cultivationPath?.effects.spiritualQiEfficiency || 1
+
+          const qiExpGain = baseGain * qiEfficiency
+
+          characterStore.gainQiExperience(qiExpGain)
           break
 
         case 'body':
-          // 炼体提升体质相关属性
-          const bodyExpGain = baseGain * (1 + characterStore.character.attributes.constitution * 0.1)
-          characterStore.gainExperience(bodyExpGain * 0.8)
-          characterStore.character.cultivation.bodyLevel += bodyExpGain * 0.1
+          // 炼体获得炼体经验，直接使用修炼方向的体质成长效率
+          const bodyPath = characterStore.getCurrentCultivationPath()
+          const bodyEfficiency = bodyPath?.effects.constitutionGrowthRate || 1
+
+          const bodyExpGain = baseGain * bodyEfficiency
+          characterStore.gainBodyExperience(bodyExpGain)
           break
 
         case 'adventure':
@@ -252,6 +262,71 @@ export const useGameStore = defineStore('game', {
       const index = this.messages.findIndex(msg => msg.id === id)
       if (index > -1) {
         this.messages.splice(index, 1)
+      }
+    },
+
+    // 记录页面隐藏时间
+    recordHiddenTime() {
+      this.hiddenTime = Date.now()
+    },
+
+    // 处理离线时间
+    processOfflineTime() {
+      if (this.hiddenTime === 0) return
+
+      const now = Date.now()
+      const offlineTime = (now - this.hiddenTime) / 1000 // 转换为秒
+      this.hiddenTime = 0
+
+      // 如果离线时间太短（小于5秒），忽略
+      if (offlineTime < 5) return
+
+      const characterStore = useCharacterStore()
+      if (!characterStore.character || !this.currentActivity) return
+
+      // 计算离线收益
+      const activity = ACTIVITIES[this.currentActivity]
+      const timeTreasureMultiplier = characterStore.getTimeTreasureSpeedMultiplier()
+      const baseGain = activity.baseGain * offlineTime * this.gameSpeed * timeTreasureMultiplier
+
+      let offlineRewards: string[] = []
+
+      switch (activity.type) {
+        case 'cultivation':
+          const cultivationPath = characterStore.getCurrentCultivationPath()
+          const qiEfficiency = cultivationPath?.effects.spiritualQiEfficiency || 1
+          const qiExpGain = baseGain * qiEfficiency
+          characterStore.gainQiExperience(qiExpGain)
+          offlineRewards.push(`练气经验+${Math.floor(qiExpGain)}`)
+          break
+
+        case 'body':
+          const bodyPath = characterStore.getCurrentCultivationPath()
+          const bodyEfficiency = bodyPath?.effects.constitutionGrowthRate || 1
+          const bodyExpGain = baseGain * bodyEfficiency
+          characterStore.gainBodyExperience(bodyExpGain)
+          offlineRewards.push(`炼体经验+${Math.floor(bodyExpGain)}`)
+          break
+      }
+
+      // 显示离线收益消息
+      if (offlineRewards.length > 0) {
+        // 简单的时间格式化函数
+        const formatTime = (seconds: number): string => {
+          const hours = Math.floor(seconds / 3600)
+          const minutes = Math.floor((seconds % 3600) / 60)
+          const secs = Math.floor(seconds % 60)
+
+          if (hours > 0) {
+            return `${hours}时${minutes}分${secs}秒`
+          } else if (minutes > 0) {
+            return `${minutes}分${secs}秒`
+          } else {
+            return `${secs}秒`
+          }
+        }
+
+        this.addMessage(`离线${formatTime(offlineTime)}，获得：${offlineRewards.join(', ')}`, 'success')
       }
     }
   }

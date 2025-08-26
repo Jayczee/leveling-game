@@ -14,7 +14,7 @@
     <!-- 消息列表 -->
     <div
       ref="messageContainer"
-      class="flex-1 bg-paper-50 border border-ink-200 rounded-lg p-2 md:p-4 overflow-y-auto space-y-1 md:space-y-2 min-h-0"
+      class="flex-1 bg-paper-50 border border-ink-200 rounded-lg p-2 overflow-y-auto space-y-1 min-h-0 max-h-32 md:max-h-48"
     >
       <div v-if="messages.length === 0" class="text-center text-ink-500 py-4 md:py-8">
         <p class="text-sm md:text-base">暂无修炼记录</p>
@@ -25,22 +25,22 @@
         <div
           v-for="message in messages"
           :key="message.id"
-          class="message-item p-2 md:p-3 rounded-lg border transition-all duration-300"
+          class="message-item p-2 rounded border transition-all duration-300"
           :class="getMessageClass(message.type)"
         >
           <div class="flex justify-between items-start">
             <div class="flex-1 min-w-0">
-              <p class="text-xs md:text-sm break-words" :class="getMessageTextClass(message.type)">
-                {{ message.text }}
+              <p class="text-xs break-words" :class="getMessageTextClass(message.type)">
+                <span v-html="formatMessageContent(message.text)"></span>
               </p>
             </div>
-            <div class="flex items-center space-x-1 md:space-x-2 ml-2 flex-shrink-0">
+            <div class="flex items-center space-x-1 ml-2 flex-shrink-0">
               <span class="text-xs text-ink-400 whitespace-nowrap">
                 {{ formatMessageTime(message.timestamp) }}
               </span>
               <button
                 @click="removeMessage(message.id)"
-                class="text-ink-400 hover:text-ink-600 text-xs w-4 h-4 flex items-center justify-center"
+                class="text-ink-400 hover:text-ink-600 text-xs w-3 h-3 flex items-center justify-center"
               >
                 ×
               </button>
@@ -146,6 +146,38 @@ function scrollToBottom() {
   })
 }
 
+// 格式化消息内容，美化奖励显示
+function formatMessageContent(text: string): string {
+  // 检查是否是奖励消息
+  if (text.includes('获得奖励：')) {
+    const parts = text.split('获得奖励：')
+    if (parts.length === 2) {
+      const prefix = parts[0]
+      const rewards = parts[1]
+
+      // 解析奖励内容
+      const formattedRewards = rewards
+        .split('，')
+        .map(reward => {
+          const trimmed = reward.trim()
+          if (trimmed.includes('灵气')) {
+            return `<span class="inline-flex items-center space-x-1"><span class="text-blue-600">💧</span><span>${trimmed}</span></span>`
+          } else if (trimmed.includes('经验')) {
+            return `<span class="inline-flex items-center space-x-1"><span class="text-green-600">⭐</span><span>${trimmed}</span></span>`
+          } else if (trimmed.includes('灵石')) {
+            return `<span class="inline-flex items-center space-x-1"><span class="text-purple-600">💎</span><span>${trimmed}</span></span>`
+          }
+          return trimmed
+        })
+        .join(' ')
+
+      return `${prefix}获得奖励：${formattedRewards}`
+    }
+  }
+
+  return text
+}
+
 // 添加测试消息
 function addTestMessage() {
   const testMessages = [
@@ -159,10 +191,13 @@ function addTestMessage() {
   gameStore.addMessage(randomMessage, 'info')
 }
 
-// 监听消息变化，自动滚动到底部
+// 监听消息变化，保持在顶部（新消息在顶部显示）
 watch(messages, () => {
   nextTick(() => {
-    scrollToBottom()
+    // 新消息在顶部，不需要滚动
+    if (messageContainer.value) {
+      messageContainer.value.scrollTop = 0
+    }
   })
 }, { deep: true })
 </script>
