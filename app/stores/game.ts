@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ACTIVITIES, GAME_CONFIG } from '~/utils/constants'
 import { EXPLORATION_AREAS } from '~/utils/exploration-areas'
-import { processExplorationEvents } from '~/utils/exploration-utils'
+import { processExplorationEvents, calculateEnlightenmentProbability } from '~/utils/exploration-utils'
 
 export type ActivityType = keyof typeof ACTIVITIES
 export type ExplorationArea = keyof typeof EXPLORATION_AREAS
@@ -123,8 +123,12 @@ export const useGameStore = defineStore('game', {
       const areaInfo = EXPLORATION_AREAS[this.explorationArea]
       if (!areaInfo) return null
 
+      // 获取角色悟性值
+      const characterStore = useCharacterStore()
+      const comprehension = characterStore.character?.attributes.comprehension || 0
+
       // 处理探险事件
-      const triggeredEvents = processExplorationEvents(areaInfo)
+      const triggeredEvents = processExplorationEvents(areaInfo, comprehension)
 
       // 重置探险状态
       this.isExploring = false
@@ -132,7 +136,6 @@ export const useGameStore = defineStore('game', {
       this.explorationStartTime = 0
 
       // 增加探险统计
-      const characterStore = useCharacterStore()
       characterStore.addExploration()
 
       if (triggeredEvents.length === 0) {
@@ -225,11 +228,15 @@ export const useGameStore = defineStore('game', {
           characterStore.gainQiExperience(qiExpGain)
 
           // 打坐修炼时有几率获得悟道经验
-          if (Math.random() < 0.1) { // 10%几率每秒获得悟道经验
+          const baseProbability = 0.1 // 10%基础概率
+          const comprehension = characterStore.character?.attributes.comprehension || 0
+          const actualProbability = calculateEnlightenmentProbability(baseProbability, comprehension)
+
+          if (Math.random() < actualProbability) {
             const paths = ['metal', 'wood', 'water', 'fire', 'earth', 'time', 'space']
             const randomPath = paths[Math.floor(Math.random() * paths.length)]
             const enlightenmentExp = Math.floor(Math.random() * 2) + 1 // 1-2点经验
-            characterStore.gainEnlightenmentExperience(randomPath, enlightenmentExp)
+            characterStore.gainEnlightenmentExperience(randomPath as any, enlightenmentExp)
           }
           break
 
@@ -311,6 +318,27 @@ export const useGameStore = defineStore('game', {
           const qiExpGain = baseGain * qiEfficiency
           characterStore.gainQiExperience(qiExpGain)
           offlineRewards.push(`练气经验+${Math.floor(qiExpGain)}`)
+
+          // 离线修炼时也计算悟道经验
+          const baseProbability = 0.1 // 10%基础概率每秒
+          const comprehension = characterStore.character?.attributes.comprehension || 0
+          const actualProbability = calculateEnlightenmentProbability(baseProbability, comprehension)
+
+          // 计算离线期间可能获得的悟道经验次数
+          let totalEnlightenmentExp = 0
+          for (let i = 0; i < offlineTime; i++) {
+            if (Math.random() < actualProbability) {
+              const paths = ['metal', 'wood', 'water', 'fire', 'earth', 'time', 'space']
+              const randomPath = paths[Math.floor(Math.random() * paths.length)]
+              const enlightenmentExp = Math.floor(Math.random() * 2) + 1 // 1-2点经验
+              characterStore.gainEnlightenmentExperience(randomPath as any, enlightenmentExp)
+              totalEnlightenmentExp += enlightenmentExp
+            }
+          }
+
+          if (totalEnlightenmentExp > 0) {
+            offlineRewards.push(`悟道经验+${totalEnlightenmentExp}`)
+          }
           break
 
         case 'body':
