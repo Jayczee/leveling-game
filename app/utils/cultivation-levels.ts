@@ -218,7 +218,7 @@ export function getCultivationLevelInfo(totalLevel: number, realms: CultivationR
 export function getTotalExpForLevel(targetLevel: number, realms: CultivationRealm[]): number {
   let totalExp = 0
   let currentLevel = 0
-  
+
   for (const realm of realms) {
     for (const level of realm.levels) {
       if (currentLevel >= targetLevel) {
@@ -228,6 +228,56 @@ export function getTotalExpForLevel(targetLevel: number, realms: CultivationReal
       currentLevel++
     }
   }
-  
+
   return totalExp
+}
+
+// 获取等级对应的名称
+export function getCultivationLevelName(level: number, realms: CultivationRealm[]): string {
+  const levelInfo = getCultivationLevelInfo(level, realms)
+  if (levelInfo.levelInfo) {
+    return levelInfo.levelInfo.name
+  }
+  return '未知境界'
+}
+
+// 检查是否达到指定等级要求（练气或炼体其中一个达到即可）
+export function meetsLevelRequirement(
+  requiredLevel: number,
+  qiLevel: number,
+  bodyLevel: number
+): boolean {
+  // 将探险区域等级转换为修炼等级（探险区域等级从1开始，修炼等级从0开始）
+  const cultivationLevel = requiredLevel - 1
+  return qiLevel >= cultivationLevel || bodyLevel >= cultivationLevel
+}
+
+// 获取等级要求的显示文本
+export function getLevelRequirementText(requiredLevel: number): string {
+  // 将探险区域等级转换为修炼等级（探险区域等级从1开始，修炼等级从0开始）
+  const cultivationLevel = requiredLevel - 1
+
+  // 获取练气和炼体等级名称
+  const qiLevelName = getCultivationLevelName(cultivationLevel, QI_CULTIVATION_REALMS)
+  const bodyLevelName = getCultivationLevelName(cultivationLevel, BODY_CULTIVATION_REALMS)
+
+  // 如果两个等级名称都存在且不同，则用"或"连接
+  if (qiLevelName !== '未知境界' && bodyLevelName !== '未知境界') {
+    if (qiLevelName === bodyLevelName) {
+      return qiLevelName
+    } else {
+      return `${qiLevelName} 或 ${bodyLevelName}`
+    }
+  }
+
+  // 如果只有一个等级名称存在
+  if (qiLevelName !== '未知境界') {
+    return qiLevelName
+  }
+
+  if (bodyLevelName !== '未知境界') {
+    return bodyLevelName
+  }
+
+  return `Lv.${requiredLevel}`
 }

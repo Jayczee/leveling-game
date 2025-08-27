@@ -141,6 +141,124 @@ export const TIME_TREASURES: Record<string, TimeTreasure> = {
   }
 } as const
 
+// 神通品质
+export enum DivinePowerQuality {
+  COMMON = 'common',
+  RARE = 'rare',
+  EPIC = 'epic',
+  LEGENDARY = 'legendary'
+}
+
+// 神通配置接口
+export interface DivinePower {
+  id: string
+  name: string
+  description: string
+  quality: DivinePowerQuality
+  maxLevel: number
+  baseUpgradeCost: number  // 基础升级消耗（灵晶）
+  costMultiplier: number   // 每级消耗倍率
+  effects: {
+    health?: number        // 每级增加的生命值
+    divineStrength?: number // 每级增加的神力
+    physicalDefense?: number // 每级增加的物抗
+    magicalDefense?: number  // 每级增加的法抗
+  }
+  icon: string
+}
+
+// 神通定义
+export const DIVINE_POWERS: Record<string, DivinePower> = {
+  IRON_BONE: {
+    id: 'iron_bone',
+    name: '铁骨神通',
+    description: '炼化骨骼如铁，大幅提升物理防御力',
+    quality: DivinePowerQuality.COMMON,
+    maxLevel: 10,
+    baseUpgradeCost: 50,
+    costMultiplier: 1.5,
+    effects: {
+      physicalDefense: 15,
+      health: 20
+    },
+    icon: '🦴'
+  },
+  GOLDEN_BODY: {
+    id: 'golden_body',
+    name: '金身护体',
+    description: '修炼金身，肉身坚如金刚，提升生命值和双抗',
+    quality: DivinePowerQuality.RARE,
+    maxLevel: 8,
+    baseUpgradeCost: 100,
+    costMultiplier: 1.8,
+    effects: {
+      health: 50,
+      physicalDefense: 10,
+      magicalDefense: 10
+    },
+    icon: '✨'
+  },
+  DIVINE_STRENGTH: {
+    id: 'divine_strength',
+    name: '神力通天',
+    description: '激发体内神力，大幅提升神力值',
+    quality: DivinePowerQuality.RARE,
+    maxLevel: 12,
+    baseUpgradeCost: 80,
+    costMultiplier: 1.6,
+    effects: {
+      divineStrength: 25,
+      health: 15
+    },
+    icon: '💪'
+  },
+  VAJRA_BODY: {
+    id: 'vajra_body',
+    name: '金刚不坏',
+    description: '修成金刚不坏之身，极大提升物理防御',
+    quality: DivinePowerQuality.EPIC,
+    maxLevel: 6,
+    baseUpgradeCost: 200,
+    costMultiplier: 2.0,
+    effects: {
+      physicalDefense: 30,
+      health: 40,
+      divineStrength: 10
+    },
+    icon: '🛡️'
+  },
+  IMMORTAL_FLESH: {
+    id: 'immortal_flesh',
+    name: '不死血肉',
+    description: '血肉重生，生命力极其旺盛',
+    quality: DivinePowerQuality.EPIC,
+    maxLevel: 8,
+    baseUpgradeCost: 150,
+    costMultiplier: 1.9,
+    effects: {
+      health: 80,
+      magicalDefense: 15
+    },
+    icon: '❤️'
+  },
+  DRAGON_ELEPHANT_POWER: {
+    id: 'dragon_elephant_power',
+    name: '龙象般若',
+    description: '修炼龙象般若功，拥有龙象之力',
+    quality: DivinePowerQuality.LEGENDARY,
+    maxLevel: 5,
+    baseUpgradeCost: 500,
+    costMultiplier: 2.5,
+    effects: {
+      divineStrength: 50,
+      health: 60,
+      physicalDefense: 20,
+      magicalDefense: 20
+    },
+    icon: '🐉'
+  }
+} as const
+
 // 游戏配置
 export const GAME_CONFIG = {
   // 基础属性点数

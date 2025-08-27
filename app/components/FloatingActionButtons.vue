@@ -65,6 +65,18 @@
             <div class="text-sm text-ink-600">感悟天地之道，提升属性</div>
           </div>
         </button>
+
+        <!-- 神通按钮 -->
+        <button
+          @click="openDivinePower"
+          class="w-full flex items-center space-x-3 p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+        >
+          <span class="text-2xl">✨</span>
+          <div class="text-left">
+            <div class="font-medium text-ink-800">神通</div>
+            <div class="text-sm text-ink-600">修炼神通，强化身体属性</div>
+          </div>
+        </button>
       </div>
     </div>
   </div>
@@ -76,6 +88,7 @@ interface Emits {
   (e: 'openExploration'): void
   (e: 'openTimeTreasure'): void
   (e: 'openEnlightenment'): void
+  (e: 'openDivinePower'): void
 }
 
 const emit = defineEmits<Emits>()
@@ -103,6 +116,12 @@ function openTimeTreasure() {
 // 打开悟道
 function openEnlightenment() {
   emit('openEnlightenment')
+  closeFunctionMenu()
+}
+
+// 打开神通
+function openDivinePower() {
+  emit('openDivinePower')
   closeFunctionMenu()
 }
 </script>

@@ -28,6 +28,20 @@ export function generateRandomRewards(rewardConfig: RewardConfig, comprehension:
     rewards.spiritualStones = Math.floor(Math.random() * (max - min + 1)) + min
   }
 
+  if (rewardConfig.spiritCrystals && Math.random() < rewardConfig.spiritCrystals.probability) {
+    const [min, max] = rewardConfig.spiritCrystals.range
+    rewards.spiritCrystals = Math.floor(Math.random() * (max - min + 1)) + min
+  }
+
+  if (rewardConfig.divinePower && Math.random() < rewardConfig.divinePower.probability) {
+    // 从可能的神通列表中随机选择一个
+    const availablePowers = rewardConfig.divinePower.powerIds
+    if (availablePowers.length > 0) {
+      const randomPower = availablePowers[Math.floor(Math.random() * availablePowers.length)]
+      rewards.divinePower = randomPower
+    }
+  }
+
   if (rewardConfig.enlightenmentExp) {
     // 使用悟性值计算实际概率
     const actualProbability = calculateEnlightenmentProbability(rewardConfig.enlightenmentExp.probability, comprehension)

@@ -139,9 +139,9 @@
     <div class="card p-3 md:p-4">
       <h3 class="font-serif font-semibold text-ink-800 mb-2 md:mb-3 text-sm md:text-base">资源</h3>
       <div class="space-y-1 md:space-y-2 text-xs md:text-sm">
-        <!-- spiritualQi 和 spiritualStones 现在作为经验使用，不在资源面板显示 -->
-        <div class="text-center text-ink-500 text-xs">
-          暂无可显示的资源
+        <div class="flex justify-between">
+          <span class="text-ink-600">灵晶:</span>
+          <span class="font-medium text-gold-600">{{ formatNumber(character?.resources.spiritCrystals || 0) }}</span>
         </div>
       </div>
     </div>

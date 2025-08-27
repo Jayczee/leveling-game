@@ -1,6 +1,6 @@
 // 可扩展的属性计算系统
 
-import { TALENTS, ENLIGHTENMENT_PATHS } from './constants'
+import { TALENTS, ENLIGHTENMENT_PATHS, DIVINE_POWERS } from './constants'
 
 // 属性修饰器接口
 export interface AttributeModifier {
@@ -205,6 +205,43 @@ export function getEnlightenmentModifier(enlightenmentPaths: any): AttributeModi
     id: 'enlightenment_paths',
     name: '悟道加成',
     source: 'enlightenment',
+    modifiers
+  }
+}
+
+// 生成神通属性修饰器
+export function getDivinePowerModifier(divinePowers: { owned: string[], levels: Record<string, number> }): AttributeModifier {
+  const modifiers: any = {}
+
+  // 遍历所有已拥有的神通
+  divinePowers.owned.forEach(powerId => {
+    const power = DIVINE_POWERS[powerId]
+    const level = divinePowers.levels[powerId] || 0
+
+    if (power && level > 0) {
+      const effects = power.effects
+
+      // 累加神通效果
+      if (effects.health) {
+        modifiers.health = (modifiers.health || 0) + (effects.health * level)
+        modifiers.maxHealth = (modifiers.maxHealth || 0) + (effects.health * level)
+      }
+      if (effects.divineStrength) {
+        modifiers.divineStrength = (modifiers.divineStrength || 0) + (effects.divineStrength * level)
+      }
+      if (effects.physicalDefense) {
+        modifiers.physicalDefense = (modifiers.physicalDefense || 0) + (effects.physicalDefense * level)
+      }
+      if (effects.magicalDefense) {
+        modifiers.magicalDefense = (modifiers.magicalDefense || 0) + (effects.magicalDefense * level)
+      }
+    }
+  })
+
+  return {
+    id: 'divine_powers',
+    name: '神通加成',
+    source: 'cultivation',
     modifiers
   }
 }

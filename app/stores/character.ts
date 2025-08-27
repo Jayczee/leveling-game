@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
-import { TALENTS, CULTIVATION_PATHS, TIME_TREASURES, ENLIGHTENMENT_PATHS } from '~/utils/constants'
+import { TALENTS, CULTIVATION_PATHS, TIME_TREASURES, ENLIGHTENMENT_PATHS, DIVINE_POWERS } from '~/utils/constants'
 import { QI_CULTIVATION_REALMS, BODY_CULTIVATION_REALMS, getCultivationLevelInfo, type CultivationLevel } from '~/utils/cultivation-levels'
-import { type AttributeModifier, calculateBaseDerivedAttributes, applyAttributeModifiers, getTalentModifier, getEnlightenmentModifier } from '~/utils/attribute-system'
+import { type AttributeModifier, calculateBaseDerivedAttributes, applyAttributeModifiers, getTalentModifier, getEnlightenmentModifier, getDivinePowerModifier } from '~/utils/attribute-system'
 
 export interface Character {
   // 基础信息
@@ -59,6 +59,13 @@ export interface Character {
   resources: {
     spiritualQi: number      // 灵气（练气经验）
     spiritualStones: number  // 灵石（炼体经验）
+    spiritCrystals: number   // 灵晶（神通升级货币）
+  }
+
+  // 神通系统
+  divinePowers: {
+    owned: string[]          // 已获得的神通ID列表
+    levels: Record<string, number>  // 神通等级 {神通ID: 等级}
   }
   
   // 装备
@@ -264,9 +271,11 @@ export const useCharacterStore = defineStore('character', {
         space: { level: 0, experience: 0 }
       }
 
+      const initialDivinePowers = { owned: [], levels: {} }
       const attributeModifiers: AttributeModifier[] = [
         getTalentModifier(data.talent),
-        getEnlightenmentModifier(enlightenmentPaths)
+        getEnlightenmentModifier(enlightenmentPaths),
+        getDivinePowerModifier(initialDivinePowers)
       ]
 
       // 计算最终属性
@@ -302,7 +311,12 @@ export const useCharacterStore = defineStore('character', {
         },
         resources: {
           spiritualQi: 90, // 接近第一级升级所需的100经验
-          spiritualStones: 90 // 接近第一级升级所需的100经验
+          spiritualStones: 90, // 接近第一级升级所需的100经验
+          spiritCrystals: 0 // 初始灵晶为0
+        },
+        divinePowers: {
+          owned: [], // 初始没有神通
+          levels: {} // 初始神通等级为空
         },
         equipment: {
           timeTreasure: null
@@ -338,10 +352,24 @@ export const useCharacterStore = defineStore('character', {
         }
       }
 
+      // 处理旧存档兼容性 - 如果没有神通系统数据，则初始化
+      if (!character.divinePowers) {
+        character.divinePowers = {
+          owned: [],
+          levels: {}
+        }
+      }
+
+      // 处理旧存档兼容性 - 如果没有灵晶资源，则初始化
+      if (character.resources && typeof character.resources.spiritCrystals === 'undefined') {
+        character.resources.spiritCrystals = 0
+      }
+
       this.character = character
 
-      // 确保属性修饰器包含悟道修饰器
+      // 确保属性修饰器包含悟道修饰器和神通修饰器
       this.updateEnlightenmentModifier()
+      this.updateDivinePowerModifier()
       this.updateDerivedAttributes()
     },
 
@@ -357,6 +385,9 @@ export const useCharacterStore = defineStore('character', {
       if (resources.spiritualStones) {
         this.character.resources.spiritualStones += resources.spiritualStones
       }
+      if (resources.spiritCrystals) {
+        this.character.resources.spiritCrystals += resources.spiritCrystals
+      }
     },
 
     // 消耗资源
@@ -370,6 +401,9 @@ export const useCharacterStore = defineStore('character', {
       if (resources.spiritualStones && this.character.resources.spiritualStones < resources.spiritualStones) {
         return false
       }
+      if (resources.spiritCrystals && this.character.resources.spiritCrystals < resources.spiritCrystals) {
+        return false
+      }
 
       // 消耗资源
       if (resources.spiritualQi) {
@@ -377,6 +411,9 @@ export const useCharacterStore = defineStore('character', {
       }
       if (resources.spiritualStones) {
         this.character.resources.spiritualStones -= resources.spiritualStones
+      }
+      if (resources.spiritCrystals) {
+        this.character.resources.spiritCrystals -= resources.spiritCrystals
       }
 
       return true
@@ -417,8 +454,9 @@ export const useCharacterStore = defineStore('character', {
     updateDerivedAttributes() {
       if (!this.character) return
 
-      // 更新悟道修饰器
+      // 更新悟道修饰器和神通修饰器
       this.updateEnlightenmentModifier()
+      this.updateDivinePowerModifier()
 
       // 使用新的属性系统重新计算所有属性
       const baseDerived = calculateBaseDerivedAttributes(
@@ -457,6 +495,24 @@ export const useCharacterStore = defineStore('character', {
         this.character.attributeModifiers[enlightenmentModifierIndex] = newEnlightenmentModifier
       } else {
         this.character.attributeModifiers.push(newEnlightenmentModifier)
+      }
+    },
+
+    // 更新神通修饰器
+    updateDivinePowerModifier() {
+      if (!this.character) return
+
+      // 找到并更新神通修饰器
+      const divinePowerModifierIndex = this.character.attributeModifiers.findIndex(
+        modifier => modifier.id === 'divine_powers'
+      )
+
+      const newDivinePowerModifier = getDivinePowerModifier(this.character.divinePowers)
+
+      if (divinePowerModifierIndex >= 0) {
+        this.character.attributeModifiers[divinePowerModifierIndex] = newDivinePowerModifier
+      } else {
+        this.character.attributeModifiers.push(newDivinePowerModifier)
       }
     },
 
@@ -782,6 +838,171 @@ export const useCharacterStore = defineStore('character', {
       console.log('需要炼体突破:', this.needBodyBreakthrough)
       console.log('可以获得练气经验:', this.canGainQiExperience)
       console.log('可以获得炼体经验:', this.canGainBodyExperience)
+
+      console.log('=== 测试完成 ===')
+    },
+
+    // 神通系统相关方法
+
+    // 获得神通
+    gainDivinePower(powerId: string) {
+      if (!this.character) return false
+
+      // 检查神通是否存在
+      const power = DIVINE_POWERS[powerId]
+      if (!power) return false
+
+      // 检查是否已经拥有该神通
+      if (this.character.divinePowers.owned.includes(powerId)) {
+        return false
+      }
+
+      // 添加神通到已拥有列表
+      this.character.divinePowers.owned.push(powerId)
+      // 初始化神通等级为0
+      this.character.divinePowers.levels[powerId] = 0
+
+      // 添加获得神通的消息
+      const gameStore = useGameStore()
+      gameStore.addMessage(`获得神通：${power.name}`, 'success')
+
+      return true
+    },
+
+    // 升级神通
+    upgradeDivinePower(powerId: string): boolean {
+      if (!this.character) return false
+
+      // 检查是否拥有该神通
+      if (!this.character.divinePowers.owned.includes(powerId)) {
+        return false
+      }
+
+      const power = DIVINE_POWERS[powerId]
+      if (!power) return false
+
+      const currentLevel = this.character.divinePowers.levels[powerId] || 0
+
+      // 检查是否已达到最大等级
+      if (currentLevel >= power.maxLevel) {
+        return false
+      }
+
+      // 计算升级所需灵晶
+      const upgradeCost = this.getDivinePowerUpgradeCost(powerId)
+
+      // 检查是否有足够的灵晶
+      if (this.character.resources.spiritCrystals < upgradeCost) {
+        return false
+      }
+
+      // 消耗灵晶
+      this.character.resources.spiritCrystals -= upgradeCost
+
+      // 升级神通
+      this.character.divinePowers.levels[powerId] = currentLevel + 1
+
+      // 更新衍生属性（会自动应用神通加成）
+      this.updateDerivedAttributes()
+
+      // 添加升级消息
+      const gameStore = useGameStore()
+      gameStore.addMessage(`${power.name}升级至${currentLevel + 1}级`, 'success')
+
+      return true
+    },
+
+    // 计算神通升级所需灵晶
+    getDivinePowerUpgradeCost(powerId: string): number {
+      if (!this.character) return 0
+
+      const power = DIVINE_POWERS[powerId]
+      if (!power) return 0
+
+      const currentLevel = this.character.divinePowers.levels[powerId] || 0
+
+      // 升级费用 = 基础费用 * (倍率 ^ 当前等级)
+      return Math.floor(power.baseUpgradeCost * Math.pow(power.costMultiplier, currentLevel))
+    },
+
+
+
+    // 获取神通总加成
+    getDivinePowerBonuses() {
+      if (!this.character) return {}
+
+      const bonuses = {
+        health: 0,
+        divineStrength: 0,
+        physicalDefense: 0,
+        magicalDefense: 0
+      }
+
+      // 遍历所有已拥有的神通
+      this.character.divinePowers.owned.forEach(powerId => {
+        const power = DIVINE_POWERS[powerId]
+        const level = this.character!.divinePowers.levels[powerId] || 0
+
+        if (power && level > 0) {
+          const effects = power.effects
+          if (effects.health) bonuses.health += effects.health * level
+          if (effects.divineStrength) bonuses.divineStrength += effects.divineStrength * level
+          if (effects.physicalDefense) bonuses.physicalDefense += effects.physicalDefense * level
+          if (effects.magicalDefense) bonuses.magicalDefense += effects.magicalDefense * level
+        }
+      })
+
+      return bonuses
+    },
+
+    // 检查是否拥有神通
+    hasDivinePower(powerId: string): boolean {
+      if (!this.character) return false
+      return this.character.divinePowers.owned.includes(powerId)
+    },
+
+    // 获取神通等级
+    getDivinePowerLevel(powerId: string): number {
+      if (!this.character) return 0
+      return this.character.divinePowers.levels[powerId] || 0
+    },
+
+    // 测试神通系统
+    testDivinePowerSystem() {
+      if (!this.character) {
+        console.log('请先创建角色')
+        return
+      }
+
+      console.log('=== 神通系统测试 ===')
+      console.log('初始状态:')
+      console.log('灵晶:', this.character.resources.spiritCrystals)
+      console.log('已拥有神通:', this.character.divinePowers.owned)
+      console.log('神通等级:', this.character.divinePowers.levels)
+
+      // 给予一些灵晶用于测试
+      this.gainResources({ spiritCrystals: 500 })
+      console.log('给予500灵晶后:', this.character.resources.spiritCrystals)
+
+      // 测试获得神通
+      console.log('\n测试获得神通...')
+      this.gainDivinePower('IRON_BONE')
+      this.gainDivinePower('GOLDEN_BODY')
+      console.log('获得神通后:', this.character.divinePowers.owned)
+
+      // 测试升级神通
+      console.log('\n测试升级神通...')
+      const ironBoneCost = this.getDivinePowerUpgradeCost('IRON_BONE')
+      console.log('铁骨神通升级消耗:', ironBoneCost)
+
+      this.upgradeDivinePower('IRON_BONE')
+      console.log('升级后等级:', this.character.divinePowers.levels)
+      console.log('剩余灵晶:', this.character.resources.spiritCrystals)
+
+      // 显示属性加成
+      console.log('\n神通属性加成:')
+      const bonuses = this.getDivinePowerBonuses()
+      console.log(bonuses)
 
       console.log('=== 测试完成 ===')
     }

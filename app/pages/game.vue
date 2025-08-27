@@ -8,7 +8,7 @@
             {{ character?.name || '修仙者' }}
           </h1>
           <div class="text-xs md:text-sm text-ink-600 whitespace-nowrap">
-            {{ currentRealm?.name }} {{ character?.cultivation.level }}层
+            修仙者
           </div>
         </div>
 
@@ -87,6 +87,7 @@
       @open-exploration="showExplorationDialog = true"
       @open-time-treasure="showTimeTreasureDialog = true"
       @open-enlightenment="showEnlightenmentDialog = true"
+      @open-divine-power="showDivinePowerDialog = true"
     />
 
     <!-- 探险弹窗 -->
@@ -102,6 +103,11 @@
     <!-- 悟道弹窗 -->
     <EnlightenmentDialog
       v-model:show="showEnlightenmentDialog"
+    />
+
+    <!-- 神通弹窗 -->
+    <DivinePowerDialog
+      v-model:show="showDivinePowerDialog"
     />
   </div>
 </template>
@@ -128,10 +134,10 @@ const showMobileMenu = ref(false)
 const showExplorationDialog = ref(false)
 const showTimeTreasureDialog = ref(false)
 const showEnlightenmentDialog = ref(false)
+const showDivinePowerDialog = ref(false)
 
 // 计算属性
 const character = computed(() => characterStore.character)
-const currentRealm = computed(() => characterStore.currentRealm)
 
 // 页面初始化
 onMounted(() => {

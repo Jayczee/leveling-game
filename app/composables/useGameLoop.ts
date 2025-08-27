@@ -168,6 +168,12 @@ export function useGameEvents() {
       if (result.totalRewards.spiritualStones) {
         characterStore.gainBodyExperience(result.totalRewards.spiritualStones)
       }
+      if (result.totalRewards.spiritCrystals) {
+        characterStore.gainResources({ spiritCrystals: result.totalRewards.spiritCrystals })
+      }
+      if (result.totalRewards.divinePower) {
+        characterStore.gainDivinePower(result.totalRewards.divinePower)
+      }
       if (result.totalRewards.enlightenmentExp) {
         // 使用指定的道，如果没有指定则随机选择
         const path = result.totalRewards.enlightenmentPath ||

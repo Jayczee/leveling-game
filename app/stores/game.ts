@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ACTIVITIES, GAME_CONFIG } from '~/utils/constants'
 import { EXPLORATION_AREAS } from '~/utils/exploration-areas'
 import { processExplorationEvents, calculateEnlightenmentProbability } from '~/utils/exploration-utils'
+import { meetsLevelRequirement } from '~/utils/cultivation-levels'
 
 export type ActivityType = keyof typeof ACTIVITIES
 export type ExplorationArea = keyof typeof EXPLORATION_AREAS
@@ -65,6 +66,20 @@ export const useGameStore = defineStore('game', {
       const elapsed = Date.now() - state.explorationStartTime
       const actualExplorationTime = GAME_CONFIG.EXPLORATION_TIME / state.gameSpeed
       return elapsed >= actualExplorationTime
+    },
+
+    // 检查是否可以进入指定探险区域
+    canEnterExplorationArea: (state) => (areaKey: string) => {
+      const areaInfo = EXPLORATION_AREAS[areaKey as ExplorationArea]
+      if (!areaInfo) return false
+
+      const characterStore = useCharacterStore()
+      if (!characterStore.character) return false
+
+      const qiLevel = characterStore.character.cultivation.qiCultivation.level
+      const bodyLevel = characterStore.character.cultivation.bodyCultivation.level
+
+      return meetsLevelRequirement(areaInfo.level, qiLevel, bodyLevel)
     }
   },
 
@@ -103,12 +118,25 @@ export const useGameStore = defineStore('game', {
     startExploration(area: ExplorationArea) {
       if (this.isExploring) return false
 
+      const areaInfo = EXPLORATION_AREAS[area]
+      if (!areaInfo) return false
+
+      // 检查等级要求
+      const characterStore = useCharacterStore()
+      if (!characterStore.character) return false
+
+      const qiLevel = characterStore.character.cultivation.qiCultivation.level
+      const bodyLevel = characterStore.character.cultivation.bodyCultivation.level
+
+      if (!meetsLevelRequirement(areaInfo.level, qiLevel, bodyLevel)) {
+        this.addMessage(`等级不足，无法进入${areaInfo.name}`, 'warning')
+        return false
+      }
+
       this.isExploring = true
       this.explorationArea = area
       this.explorationStartTime = Date.now()
 
-      const areaInfo = EXPLORATION_AREAS[area]
-      if (!areaInfo) return false
       this.addMessage(`前往${areaInfo.name}探险`, 'info')
 
       // 不再使用定时器自动完成，由UI组件检查完成状态
@@ -158,6 +186,11 @@ export const useGameStore = defineStore('game', {
           if (key === 'enlightenmentPath') {
             // 悟道路径信息直接保存（如果有多个事件都有悟道经验，使用最后一个的路径）
             totalRewards[key] = value
+          } else if (key === 'divinePower') {
+            // 神通奖励特殊处理：只保存第一个获得的神通（避免重复）
+            if (!totalRewards[key]) {
+              totalRewards[key] = value
+            }
           } else {
             totalRewards[key] = (totalRewards[key] || 0) + value
           }

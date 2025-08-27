@@ -4,6 +4,11 @@
 export interface RewardConfig {
   spiritualQi?: { range: [number, number], probability: number }  // 灵气（练气经验）
   spiritualStones?: { range: [number, number], probability: number }  // 灵石（炼体经验）
+  spiritCrystals?: { range: [number, number], probability: number }  // 灵晶（神通升级货币）
+  divinePower?: {
+    powerIds: string[],  // 可能获得的神通ID列表
+    probability: number  // 获得神通的概率
+  }  // 神通奖励
   enlightenmentExp?: {
     range: [number, number],
     probability: number,

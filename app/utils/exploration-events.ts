@@ -48,5 +48,10 @@ export const RANDOM_EVENTS: Record<string, ExplorationEvent> = {
     id: 'ancient_inheritance',
     name: '古老传承',
     description: '获得了古老的修炼传承，修为大增'
+  },
+  encounter_dragon: {
+    id: 'encounter_dragon',
+    name: '遭遇真龙',
+    description: '在龙谷中遭遇了一条古老的真龙，获得了龙族的认可'
   }
 } as const

@@ -47,28 +47,31 @@
         <div v-else>
           <h3 class="font-serif font-semibold text-ink-800 mb-3">选择探险地点</h3>
 
-          <div class="space-y-3">
+          <div class="space-y-2">
             <div
               v-for="(area, key) in EXPLORATION_AREAS"
               :key="key"
-              class="border border-ink-300 rounded-lg p-3 cursor-pointer hover:bg-paper-100 transition-colors"
+              class="border border-ink-300 rounded-lg p-2 cursor-pointer hover:bg-paper-100 transition-colors"
+              :class="{
+                'opacity-50 cursor-not-allowed': !gameStore.canEnterExplorationArea(key),
+                'hover:bg-paper-50': !gameStore.canEnterExplorationArea(key)
+              }"
               @click="startExploration(key)"
             >
-              <div class="flex justify-between items-start mb-2">
-                <h4 class="font-serif font-medium text-ink-800">
+              <div class="flex justify-between items-start mb-1">
+                <h4 class="font-serif font-medium text-ink-800 text-sm flex-1 mr-2">
                   {{ area.name }}
                 </h4>
-                <span class="text-xs px-2 py-1 bg-ink-100 text-ink-600 rounded">
-                  Lv.{{ area.level }}
+                <span class="text-xs px-2 py-1 bg-ink-100 text-ink-600 rounded whitespace-nowrap">
+                  {{ getLevelRequirementText(area.level) }}
                 </span>
               </div>
-              <p class="text-sm text-ink-600 mb-2">
+              <p class="text-xs text-ink-600 mb-1">
                 {{ area.description }}
               </p>
-              <div class="text-xs text-ink-500 space-y-1">
+              <div class="text-xs text-ink-500 space-y-0.5">
                 <p>探险时间: {{ formatTime(GAME_CONFIG.EXPLORATION_TIME / 1000) }}</p>
                 <p>最大事件数: {{ area.maxEvents }}</p>
-                <p>可能遇到的事件: {{ getAreaEventNames(area.events).join('、') }}</p>
               </div>
             </div>
           </div>
@@ -82,6 +85,7 @@
 import { GAME_CONFIG } from '~/utils/constants'
 import { EXPLORATION_AREAS } from '~/utils/exploration-areas'
 import { RANDOM_EVENTS } from '~/utils/exploration-events'
+import { getLevelRequirementText } from '~/utils/cultivation-levels'
 
 // Props
 interface Props {
@@ -169,6 +173,11 @@ function getAreaEventNames(eventConfigs: any[]): string[] {
 
 // 开始探险
 function startExploration(areaKey: string) {
+  // 检查是否可以进入该区域
+  if (!gameStore.canEnterExplorationArea(areaKey)) {
+    return
+  }
+
   gameStore.startExploration(areaKey as keyof typeof EXPLORATION_AREAS)
 }
 
