@@ -159,22 +159,14 @@
           <span class="text-ink-800 font-medium">{{ character?.stats.totalExploration || 0 }}</span>
         </div>
         <div class="flex justify-between">
-          <span class="text-ink-600">练气等级：</span>
-          <span class="text-blue-600 font-medium">{{ character?.cultivation.qiCultivation.level || 0 }}</span>
+          <span class="text-ink-600">累积练气经验：</span>
+          <span class="text-blue-600 font-medium">{{ formatNumber(character?.stats.totalSpiritualQiGained || 0) }}</span>
         </div>
         <div class="flex justify-between">
-          <span class="text-ink-600">炼体等级：</span>
-          <span class="text-orange-600 font-medium">{{ character?.cultivation.bodyCultivation.level || 0 }}</span>
+          <span class="text-ink-600">累积炼体经验：</span>
+          <span class="text-orange-600 font-medium">{{ formatNumber(character?.stats.totalSpiritualStonesGained || 0) }}</span>
         </div>
-        <!-- 测试按钮 -->
-        <div class="pt-2 border-t border-ink-200">
-          <button
-            @click="testUpgrade"
-            class="w-full px-2 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
-          >
-            测试升级机制
-          </button>
-        </div>
+
       </div>
     </div>
 
@@ -253,8 +245,5 @@ const handleBodyBreakthrough = () => {
   gameStore.addMessage('炼体突破功能暂未开放，敬请期待！', 'info')
 }
 
-// 测试升级机制
-const testUpgrade = () => {
-  characterStore.testUpgrade()
-}
+
 </script>

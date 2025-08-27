@@ -168,6 +168,12 @@ export function useGameEvents() {
       if (result.totalRewards.spiritualStones) {
         characterStore.gainBodyExperience(result.totalRewards.spiritualStones)
       }
+      if (result.totalRewards.enlightenmentExp) {
+        // 使用指定的道，如果没有指定则随机选择
+        const path = result.totalRewards.enlightenmentPath ||
+          ['metal', 'wood', 'water', 'fire', 'earth', 'time', 'space'][Math.floor(Math.random() * 7)]
+        characterStore.gainEnlightenmentExperience(path, result.totalRewards.enlightenmentExp)
+      }
 
       // 如果有奖励，显示奖励信息
       if (Object.keys(result.totalRewards).length > 0) {
@@ -181,6 +187,19 @@ export function useGameEvents() {
     const parts = []
     if (rewards.spiritualQi) parts.push(`练气经验+${rewards.spiritualQi}`)
     if (rewards.spiritualStones) parts.push(`炼体经验+${rewards.spiritualStones}`)
+    if (rewards.enlightenmentExp) {
+      const pathNames: Record<string, string> = {
+        metal: '金之道',
+        wood: '木之道',
+        water: '水之道',
+        fire: '火之道',
+        earth: '土之道',
+        time: '时间之道',
+        space: '空间之道'
+      }
+      const pathName = pathNames[rewards.enlightenmentPath] || '悟道'
+      parts.push(`${pathName}经验+${rewards.enlightenmentExp}`)
+    }
     return parts.join(', ')
   }
 

@@ -53,6 +53,18 @@
             <div class="text-sm text-ink-600">装备法宝提升修炼效率</div>
           </div>
         </button>
+
+        <!-- 悟道按钮 -->
+        <button
+          @click="openEnlightenment"
+          class="w-full flex items-center space-x-3 p-4 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+        >
+          <span class="text-2xl">🧘</span>
+          <div class="text-left">
+            <div class="font-medium text-ink-800">悟道</div>
+            <div class="text-sm text-ink-600">感悟天地之道，提升属性</div>
+          </div>
+        </button>
       </div>
     </div>
   </div>
@@ -63,6 +75,7 @@
 interface Emits {
   (e: 'openExploration'): void
   (e: 'openTimeTreasure'): void
+  (e: 'openEnlightenment'): void
 }
 
 const emit = defineEmits<Emits>()
@@ -84,6 +97,12 @@ function openExploration() {
 // 打开时光法宝
 function openTimeTreasure() {
   emit('openTimeTreasure')
+  closeFunctionMenu()
+}
+
+// 打开悟道
+function openEnlightenment() {
+  emit('openEnlightenment')
   closeFunctionMenu()
 }
 </script>

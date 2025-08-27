@@ -144,7 +144,7 @@ export const useGameStore = defineStore('game', {
       }
 
       // 合并所有奖励
-      const totalRewards: Record<string, number> = {}
+      const totalRewards: Record<string, any> = {}
       const eventMessages: string[] = []
 
       for (const { event, rewards } of triggeredEvents) {
@@ -152,7 +152,12 @@ export const useGameStore = defineStore('game', {
 
         // 合并奖励
         for (const [key, value] of Object.entries(rewards)) {
-          totalRewards[key] = (totalRewards[key] || 0) + value
+          if (key === 'enlightenmentPath') {
+            // 悟道路径信息直接保存（如果有多个事件都有悟道经验，使用最后一个的路径）
+            totalRewards[key] = value
+          } else {
+            totalRewards[key] = (totalRewards[key] || 0) + value
+          }
         }
       }
 
@@ -218,6 +223,14 @@ export const useGameStore = defineStore('game', {
           const qiExpGain = baseGain * qiEfficiency
 
           characterStore.gainQiExperience(qiExpGain)
+
+          // 打坐修炼时有几率获得悟道经验
+          if (Math.random() < 0.1) { // 10%几率每秒获得悟道经验
+            const paths = ['metal', 'wood', 'water', 'fire', 'earth', 'time', 'space']
+            const randomPath = paths[Math.floor(Math.random() * paths.length)]
+            const enlightenmentExp = Math.floor(Math.random() * 2) + 1 // 1-2点经验
+            characterStore.gainEnlightenmentExperience(randomPath, enlightenmentExp)
+          }
           break
 
         case 'body':

@@ -164,6 +164,118 @@ export const GAME_CONFIG = {
 
 
 
+// 悟道系统
+export interface EnlightenmentPath {
+  id: string
+  name: string
+  description: string
+  icon: string
+  maxLevel: number
+  expPerLevel: number
+  effects: {
+    // 基础属性加成（每级百分比）
+    constitution?: number
+    spiritualPower?: number
+    comprehension?: number
+    physicalDefense?: number
+    magicalDefense?: number
+    health?: number
+    mana?: number
+    divineStrength?: number
+    // 特殊效果（每级百分比）
+    explorationTimeReduction?: number
+    cultivationEfficiency?: number
+  }
+}
+
+// 悟道之道定义
+export const ENLIGHTENMENT_PATHS: Record<string, EnlightenmentPath> = {
+  METAL: {
+    id: 'metal',
+    name: '金之道',
+    description: '金主坚固，增强物理防御',
+    icon: '⚔️',
+    maxLevel: 100,
+    expPerLevel: 10,
+    effects: {
+      physicalDefense: 0.5, // 每级增加0.5%物理防御
+      mana: 5 // 每级增加5点法力值
+    }
+  },
+  WOOD: {
+    id: 'wood',
+    name: '木之道',
+    description: '木主生机，增强生命力',
+    icon: '🌳',
+    maxLevel: 100,
+    expPerLevel: 10,
+    effects: {
+      health: 0.5, // 每级增加0.5%生命值
+      mana: 5 // 每级增加5点法力值
+    }
+  },
+  WATER: {
+    id: 'water',
+    name: '水之道',
+    description: '水主柔韧，增强法术防御',
+    icon: '💧',
+    maxLevel: 100,
+    expPerLevel: 10,
+    effects: {
+      magicalDefense: 0.5, // 每级增加0.5%法术防御
+      mana: 5 // 每级增加5点法力值
+    }
+  },
+  FIRE: {
+    id: 'fire',
+    name: '火之道',
+    description: '火主炽热，增强法力',
+    icon: '🔥',
+    maxLevel: 100,
+    expPerLevel: 10,
+    effects: {
+      // 火之道特殊：每级增加额外法力值
+      mana: 5 // 每级增加5点法力值
+    }
+  },
+  EARTH: {
+    id: 'earth',
+    name: '土之道',
+    description: '土主厚重，增强神力',
+    icon: '🏔️',
+    maxLevel: 100,
+    expPerLevel: 10,
+    effects: {
+      divineStrength: 0.5, // 每级增加0.5%神力
+      mana: 5 // 每级增加5点法力值
+    }
+  },
+  TIME: {
+    id: 'time',
+    name: '时间之道',
+    description: '时间主流转，提升修炼效率',
+    icon: '⏰',
+    maxLevel: 100,
+    expPerLevel: 10,
+    effects: {
+      cultivationEfficiency: 0.5, // 每级增加0.5%修炼效率
+      mana: 5 // 每级增加5点法力值
+    }
+  },
+  SPACE: {
+    id: 'space',
+    name: '空间之道',
+    description: '空间主距离，减少探险时间',
+    icon: '🌌',
+    maxLevel: 100,
+    expPerLevel: 10,
+    effects: {
+      explorationTimeReduction: 0.5, // 每级减少0.5%探险时间
+      mana: 5 // 每级增加5点法力值
+    }
+  }
+} as const
+
 // 计算衍生属性
 export function calculateDerivedAttributes(constitution: number, spiritualPower: number) {
   // 基础值 + 属性加成

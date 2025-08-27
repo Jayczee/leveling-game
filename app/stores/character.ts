@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
-import { TALENTS, CULTIVATION_PATHS, TIME_TREASURES, calculateDerivedAttributes } from '~/utils/constants'
+import { TALENTS, CULTIVATION_PATHS, TIME_TREASURES, ENLIGHTENMENT_PATHS } from '~/utils/constants'
 import { QI_CULTIVATION_REALMS, BODY_CULTIVATION_REALMS, getCultivationLevelInfo, type CultivationLevel } from '~/utils/cultivation-levels'
-import { type AttributeModifier, calculateBaseDerivedAttributes, applyAttributeModifiers, getTalentModifier } from '~/utils/attribute-system'
+import { type AttributeModifier, calculateBaseDerivedAttributes, applyAttributeModifiers, getTalentModifier, getEnlightenmentModifier } from '~/utils/attribute-system'
 
 export interface Character {
   // 基础信息
@@ -42,6 +42,19 @@ export interface Character {
     }
   }
 
+  // 悟道系统
+  enlightenment: {
+    paths: {
+      metal: { level: number; experience: number }     // 金之道
+      wood: { level: number; experience: number }      // 木之道
+      water: { level: number; experience: number }     // 水之道
+      fire: { level: number; experience: number }      // 火之道
+      earth: { level: number; experience: number }     // 土之道
+      time: { level: number; experience: number }      // 时间之道
+      space: { level: number; experience: number }     // 空间之道
+    }
+  }
+
   // 资源
   resources: {
     spiritualQi: number      // 灵气（练气经验）
@@ -64,6 +77,8 @@ export interface Character {
     totalExploration: number // 总探险次数
     breakthroughAttempts: number // 突破尝试次数
     successfulBreakthroughs: number // 成功突破次数
+    totalSpiritualQiGained: number // 累积获得的练气经验
+    totalSpiritualStonesGained: number // 累积获得的炼体经验
   }
 }
 
@@ -173,7 +188,7 @@ export const useCharacterStore = defineStore('character', {
       return !!nextLevelInfo?.levelInfo
     },
 
-    // 检查练气是否需要显示突破按钮（经验满且无下一级）
+    // 检查练气是否需要显示突破按钮（达到当前境界最后一级且经验满）
     needQiBreakthrough: (state) => {
       if (!state.character) return false
 
@@ -184,12 +199,16 @@ export const useCharacterStore = defineStore('character', {
         return false
       }
 
-      // 检查是否没有下一级（即已达到当前境界最高级）
-      const nextLevelInfo = getCultivationLevelInfo(state.character.cultivation.qiCultivation.level + 1, QI_CULTIVATION_REALMS)
-      return !nextLevelInfo?.levelInfo
+      // 检查是否达到当前境界的最后一级
+      if (!currentLevelInfo.realm) return false
+
+      const isLastLevelInRealm = currentLevelInfo.levelInRealm === currentLevelInfo.realm.levels.length - 1
+
+      // 如果是当前境界的最后一级且经验满，显示突破按钮
+      return isLastLevelInRealm
     },
 
-    // 检查炼体是否需要显示突破按钮（经验满且无下一级）
+    // 检查炼体是否需要显示突破按钮（达到当前境界最后一级且经验满）
     needBodyBreakthrough: (state) => {
       if (!state.character) return false
 
@@ -200,9 +219,13 @@ export const useCharacterStore = defineStore('character', {
         return false
       }
 
-      // 检查是否没有下一级（即已达到当前境界最高级）
-      const nextLevelInfo = getCultivationLevelInfo(state.character.cultivation.bodyCultivation.level + 1, BODY_CULTIVATION_REALMS)
-      return !nextLevelInfo?.levelInfo
+      // 检查是否达到当前境界的最后一级
+      if (!currentLevelInfo.realm) return false
+
+      const isLastLevelInRealm = currentLevelInfo.levelInRealm === currentLevelInfo.realm.levels.length - 1
+
+      // 如果是当前境界的最后一级且经验满，显示突破按钮
+      return isLastLevelInRealm
     }
   },
 
@@ -231,8 +254,19 @@ export const useCharacterStore = defineStore('character', {
       }
 
       // 初始化属性修饰器
+      const enlightenmentPaths = {
+        metal: { level: 0, experience: 0 },
+        wood: { level: 0, experience: 0 },
+        water: { level: 0, experience: 0 },
+        fire: { level: 0, experience: 0 },
+        earth: { level: 0, experience: 0 },
+        time: { level: 0, experience: 0 },
+        space: { level: 0, experience: 0 }
+      }
+
       const attributeModifiers: AttributeModifier[] = [
-        getTalentModifier(data.talent)
+        getTalentModifier(data.talent),
+        getEnlightenmentModifier(enlightenmentPaths)
       ]
 
       // 计算最终属性
@@ -255,6 +289,17 @@ export const useCharacterStore = defineStore('character', {
             level: 0
           }
         },
+        enlightenment: {
+          paths: {
+            metal: { level: 0, experience: 0 },
+            wood: { level: 0, experience: 0 },
+            water: { level: 0, experience: 0 },
+            fire: { level: 0, experience: 0 },
+            earth: { level: 0, experience: 0 },
+            time: { level: 0, experience: 0 },
+            space: { level: 0, experience: 0 }
+          }
+        },
         resources: {
           spiritualQi: 90, // 接近第一级升级所需的100经验
           spiritualStones: 90 // 接近第一级升级所需的100经验
@@ -269,14 +314,35 @@ export const useCharacterStore = defineStore('character', {
           totalPlayTime: 0,
           totalExploration: 0,
           breakthroughAttempts: 0,
-          successfulBreakthroughs: 0
+          successfulBreakthroughs: 0,
+          totalSpiritualQiGained: 0,
+          totalSpiritualStonesGained: 0
         }
       }
     },
 
     // 加载角色
     loadCharacter(character: Character) {
+      // 处理旧存档兼容性 - 如果没有悟道系统数据，则初始化
+      if (!character.enlightenment) {
+        character.enlightenment = {
+          paths: {
+            metal: { level: 0, experience: 0 },
+            wood: { level: 0, experience: 0 },
+            water: { level: 0, experience: 0 },
+            fire: { level: 0, experience: 0 },
+            earth: { level: 0, experience: 0 },
+            time: { level: 0, experience: 0 },
+            space: { level: 0, experience: 0 }
+          }
+        }
+      }
+
       this.character = character
+
+      // 确保属性修饰器包含悟道修饰器
+      this.updateEnlightenmentModifier()
+      this.updateDerivedAttributes()
     },
 
 
@@ -351,6 +417,9 @@ export const useCharacterStore = defineStore('character', {
     updateDerivedAttributes() {
       if (!this.character) return
 
+      // 更新悟道修饰器
+      this.updateEnlightenmentModifier()
+
       // 使用新的属性系统重新计算所有属性
       const baseDerived = calculateBaseDerivedAttributes(
         this.character.attributes.constitution,
@@ -370,6 +439,24 @@ export const useCharacterStore = defineStore('character', {
       this.character.derivedAttributes = {
         ...finalAttributes.derived,
         health: Math.floor(finalAttributes.derived.maxHealth * healthRatio)
+      }
+    },
+
+    // 更新悟道修饰器
+    updateEnlightenmentModifier() {
+      if (!this.character) return
+
+      // 找到并更新悟道修饰器
+      const enlightenmentModifierIndex = this.character.attributeModifiers.findIndex(
+        modifier => modifier.id === 'enlightenment_paths'
+      )
+
+      const newEnlightenmentModifier = getEnlightenmentModifier(this.character.enlightenment.paths)
+
+      if (enlightenmentModifierIndex >= 0) {
+        this.character.attributeModifiers[enlightenmentModifierIndex] = newEnlightenmentModifier
+      } else {
+        this.character.attributeModifiers.push(newEnlightenmentModifier)
       }
     },
 
@@ -415,6 +502,9 @@ export const useCharacterStore = defineStore('character', {
       // 直接增加经验，不限制上限，让升级逻辑处理
       this.character.resources.spiritualQi += amount
 
+      // 更新累积经验统计
+      this.character.stats.totalSpiritualQiGained += amount
+
       // 检查是否可以升级
       this.checkQiLevelUp()
     },
@@ -428,6 +518,9 @@ export const useCharacterStore = defineStore('character', {
 
       // 直接增加经验，不限制上限，让升级逻辑处理
       this.character.resources.spiritualStones += amount
+
+      // 更新累积经验统计
+      this.character.stats.totalSpiritualStonesGained += amount
 
       // 检查是否可以升级
       this.checkBodyLevelUp()
@@ -548,6 +641,101 @@ export const useCharacterStore = defineStore('character', {
       }
     },
 
+    // 悟道系统相关方法
+
+    // 获得悟道经验
+    gainEnlightenmentExperience(pathId: string, amount: number) {
+      if (!this.character) return
+
+      // 类型安全的路径访问
+      const pathKey = pathId.toLowerCase() as keyof typeof this.character.enlightenment.paths
+      const path = this.character.enlightenment.paths[pathKey]
+      if (!path) return
+
+      // 增加经验
+      path.experience += amount
+
+      // 检查是否可以升级
+      this.checkEnlightenmentLevelUp(pathId)
+
+      // 添加消息
+      const pathConfig = ENLIGHTENMENT_PATHS[pathId.toUpperCase() as keyof typeof ENLIGHTENMENT_PATHS]
+      if (pathConfig) {
+        const gameStore = useGameStore()
+        gameStore.addMessage(`${pathConfig.name}经验+${amount}`, 'info')
+      }
+    },
+
+    // 检查悟道等级提升
+    checkEnlightenmentLevelUp(pathId: string) {
+      if (!this.character) return
+
+      const pathKey = pathId.toLowerCase() as keyof typeof this.character.enlightenment.paths
+      const path = this.character.enlightenment.paths[pathKey]
+      const pathConfig = ENLIGHTENMENT_PATHS[pathId.toUpperCase() as keyof typeof ENLIGHTENMENT_PATHS]
+      if (!path || !pathConfig) return
+
+      // 循环检查升级
+      while (path.level < pathConfig.maxLevel && path.experience >= pathConfig.expPerLevel) {
+        path.experience -= pathConfig.expPerLevel
+        path.level += 1
+
+        // 应用悟道加成
+        this.applyEnlightenmentBonus(pathConfig)
+
+        // 添加升级消息
+        const gameStore = useGameStore()
+        gameStore.addMessage(`${pathConfig.name}突破：${path.level}级`, 'success')
+      }
+    },
+
+    // 应用悟道加成
+    applyEnlightenmentBonus(pathConfig: any) {
+      if (!this.character) return
+
+      const effects = pathConfig.effects
+      if (!effects) return
+
+      // 应用固定法力值加成
+      if (effects.mana && typeof effects.mana === 'number') {
+        this.character.derivedAttributes.mana += effects.mana
+      }
+
+      // 更新衍生属性以应用百分比加成
+      this.updateDerivedAttributes()
+    },
+
+    // 获取悟道总加成
+    getEnlightenmentBonuses() {
+      if (!this.character) return {}
+
+      const bonuses: any = {
+        physicalDefense: 0,
+        magicalDefense: 0,
+        health: 0,
+        mana: 0,
+        divineStrength: 0,
+        explorationTimeReduction: 0,
+        cultivationEfficiency: 0
+      }
+
+      // 遍历所有悟道路径
+      Object.entries(this.character.enlightenment.paths).forEach(([pathId, pathData]) => {
+        const pathConfig = ENLIGHTENMENT_PATHS[pathId.toUpperCase() as keyof typeof ENLIGHTENMENT_PATHS]
+        if (!pathConfig || !pathData.level) return
+
+        const effects = pathConfig.effects
+        Object.entries(effects).forEach(([effectType, effectValue]) => {
+          if (typeof effectValue === 'number' && effectType !== 'mana') {
+            // 百分比加成
+            bonuses[effectType] += (effectValue * pathData.level) / 100
+          }
+        })
+      })
+
+      return bonuses
+    },
+
     // 测试升级机制的辅助函数
     testUpgrade() {
       if (!this.character) {
@@ -578,12 +766,12 @@ export const useCharacterStore = defineStore('character', {
 
       // 测试连续升级
       console.log('\n测试连续升级...')
-      this.gainQiExperience(500) // 给予大量经验
+      this.gainQiExperience(20) // 给予大量经验
       console.log('给予500点练气经验后:')
       console.log('练气等级:', this.character.cultivation.qiCultivation.level)
       console.log('练气经验:', this.character.resources.spiritualQi)
 
-      this.gainBodyExperience(500) // 给予大量经验
+      this.gainBodyExperience(20) // 给予大量经验
       console.log('给予500点炼体经验后:')
       console.log('炼体等级:', this.character.cultivation.bodyCultivation.level)
       console.log('炼体经验:', this.character.resources.spiritualStones)

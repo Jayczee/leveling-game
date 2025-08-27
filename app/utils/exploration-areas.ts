@@ -15,7 +15,8 @@ export const EXPLORATION_AREAS: Record<string, ExplorationAreaConfig> = {
         eventId: 'find_herb',
         probability: 0.6,
         rewards: {
-          spiritualQi: { range: [48, 72], probability: 0.9 }
+          spiritualQi: { range: [48, 72], probability: 0.9 },
+          enlightenmentExp: { range: [1, 3], probability: 0.3, path: 'wood' }  // 草药 → 木之道
         }
       },
       {
@@ -23,14 +24,16 @@ export const EXPLORATION_AREAS: Record<string, ExplorationAreaConfig> = {
         probability: 0.4,
         rewards: {
           spiritualQi: { range: [25, 35], probability: 0.7 },
-          spiritualStones: { range: [12, 18], probability: 0.8 }
+          spiritualStones: { range: [12, 18], probability: 0.8 },
+          enlightenmentExp: { range: [1, 2], probability: 0.2, path: 'earth' }  // 动物 → 土之道
         }
       },
       {
         eventId: 'peaceful_meditation',
         probability: 0.3,
         rewards: {
-          spiritualQi: { range: [20, 30], probability: 0.9 }
+          spiritualQi: { range: [20, 30], probability: 0.9 },
+          enlightenmentExp: { range: [2, 4], probability: 0.4, path: 'time' }  // 冥想 → 时间之道
         }
       }
     ]
@@ -47,7 +50,8 @@ export const EXPLORATION_AREAS: Record<string, ExplorationAreaConfig> = {
         probability: 0.3,
         rewards: {
           spiritualStones: { range: [80, 120], probability: 0.8 },  // 现在作为炼体经验
-          spiritualQi: { range: [1, 1], probability: 0.9 }  // 少量练气经验
+          spiritualQi: { range: [1, 1], probability: 0.9 },  // 少量练气经验
+          enlightenmentExp: { range: [2, 4], probability: 0.4, path: 'metal' }  // 灵石 → 金之道
         }
       },
       {
@@ -55,7 +59,8 @@ export const EXPLORATION_AREAS: Record<string, ExplorationAreaConfig> = {
         probability: 0.5,
         rewards: {
           spiritualStones: { range: [40, 60], probability: 0.8 },
-          spiritualQi: { range: [70, 90], probability: 0.7 }
+          spiritualQi: { range: [70, 90], probability: 0.7 },
+          enlightenmentExp: { range: [1, 3], probability: 0.3, path: 'fire' }  // 野兽 → 火之道
         }
       },
       {
@@ -63,7 +68,8 @@ export const EXPLORATION_AREAS: Record<string, ExplorationAreaConfig> = {
         probability: 0.2,
         rewards: {
           spiritualStones: { range: [180, 220], probability: 0.9 },  // 大量炼体经验
-          spiritualQi: { range: [1, 3], probability: 0.6 }  // 少量练气经验
+          spiritualQi: { range: [1, 3], probability: 0.6 },  // 少量练气经验
+          enlightenmentExp: { range: [3, 6], probability: 0.5, path: 'space' }  // 洞穴 → 空间之道
         }
       }
     ]
@@ -80,14 +86,16 @@ export const EXPLORATION_AREAS: Record<string, ExplorationAreaConfig> = {
         probability: 0.2,
         rewards: {
           spiritualStones: { range: [90, 110], probability: 0.8 },  // 炼体经验
-          spiritualQi: { range: [4, 6], probability: 0.7 }  // 练气经验
+          spiritualQi: { range: [4, 6], probability: 0.7 },  // 练气经验
+          enlightenmentExp: { range: [3, 5], probability: 0.4, path: 'metal' }  // 神器 → 金之道
         }
       },
       {
         eventId: 'trigger_formation',
         probability: 0.4,
         rewards: {
-          spiritualQi: { range: [210, 250], probability: 0.8 }
+          spiritualQi: { range: [210, 250], probability: 0.8 },
+          enlightenmentExp: { range: [4, 7], probability: 0.5, path: 'water' }  // 法阵 → 水之道
         }
       },
       {
@@ -95,7 +103,8 @@ export const EXPLORATION_AREAS: Record<string, ExplorationAreaConfig> = {
         probability: 0.1,
         rewards: {
           spiritualQi: { range: [180, 220], probability: 0.9 },
-          spiritualStones: { range: [2, 4], probability: 0.6 }
+          spiritualStones: { range: [2, 4], probability: 0.6 },
+          enlightenmentExp: { range: [5, 10], probability: 0.8, path: 'time' }  // 传承 → 时间之道
         }
       }
     ]

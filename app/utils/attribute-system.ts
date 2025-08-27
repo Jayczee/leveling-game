@@ -1,10 +1,12 @@
 // 可扩展的属性计算系统
 
+import { TALENTS, ENLIGHTENMENT_PATHS } from './constants'
+
 // 属性修饰器接口
 export interface AttributeModifier {
   id: string
   name: string
-  source: 'base' | 'talent' | 'equipment' | 'cultivation' | 'temporary'
+  source: 'base' | 'talent' | 'equipment' | 'cultivation' | 'enlightenment' | 'temporary'
   modifiers: {
     // 基础属性修饰
     constitution?: number
@@ -82,9 +84,9 @@ export function applyAttributeModifiers(
   let finalBase = { ...baseAttributes }
   let finalDerived = { ...baseDerived }
   
-  // 按优先级排序修饰器（base -> talent -> cultivation -> equipment -> temporary）
+  // 按优先级排序修饰器（base -> talent -> cultivation -> enlightenment -> equipment -> temporary）
   const sortedModifiers = [...modifiers].sort((a, b) => {
-    const priority = { base: 0, talent: 1, cultivation: 2, equipment: 3, temporary: 4 }
+    const priority = { base: 0, talent: 1, cultivation: 2, enlightenment: 3, equipment: 4, temporary: 5 }
     return priority[a.source] - priority[b.source]
   })
   
@@ -157,18 +159,52 @@ export function applyAttributeModifiers(
 export function getTalentModifier(talentKey: keyof typeof TALENTS): AttributeModifier {
   const talent = TALENTS[talentKey]
   const modifiers: AttributeModifier['modifiers'] = {}
-  
+
   if ('constitution' in talent.effects) {
     modifiers.constitution = talent.effects.constitution
   }
   if ('comprehension' in talent.effects) {
     modifiers.comprehension = talent.effects.comprehension
   }
-  
+
   return {
     id: `talent_${talentKey}`,
     name: talent.name,
     source: 'talent',
+    modifiers
+  }
+}
+
+// 获取悟道修饰器
+export function getEnlightenmentModifier(enlightenmentPaths: any): AttributeModifier {
+  const modifiers: AttributeModifier['modifiers'] = {}
+
+  // 遍历所有悟道路径
+  Object.entries(enlightenmentPaths).forEach(([pathId, pathData]: [string, any]) => {
+    const pathConfig = ENLIGHTENMENT_PATHS[pathId.toUpperCase() as keyof typeof ENLIGHTENMENT_PATHS]
+    if (!pathConfig || !pathData.level) return
+
+    const effects = pathConfig.effects
+    Object.entries(effects).forEach(([effectType, effectValue]) => {
+      if (typeof effectValue === 'number') {
+        if (effectType === 'mana') {
+          // 固定法力值加成
+          modifiers.mana = (modifiers.mana || 0) + (effectValue * pathData.level)
+        } else {
+          // 百分比加成
+          const percentKey = `${effectType}Percent` as keyof typeof modifiers
+          if (percentKey in modifiers) {
+            modifiers[percentKey] = (modifiers[percentKey] || 0) + (effectValue * pathData.level)
+          }
+        }
+      }
+    })
+  })
+
+  return {
+    id: 'enlightenment_paths',
+    name: '悟道加成',
+    source: 'enlightenment',
     modifiers
   }
 }

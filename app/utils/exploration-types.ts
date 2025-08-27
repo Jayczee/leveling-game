@@ -4,6 +4,11 @@
 export interface RewardConfig {
   spiritualQi?: { range: [number, number], probability: number }  // 灵气（练气经验）
   spiritualStones?: { range: [number, number], probability: number }  // 灵石（炼体经验）
+  enlightenmentExp?: {
+    range: [number, number],
+    probability: number,
+    path: 'metal' | 'wood' | 'water' | 'fire' | 'earth' | 'time' | 'space'  // 指定哪条道
+  }  // 悟道经验
 }
 
 // 探险事件配置

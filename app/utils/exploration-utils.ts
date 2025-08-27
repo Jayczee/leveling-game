@@ -17,6 +17,13 @@ export function generateRandomRewards(rewardConfig: RewardConfig): Record<string
     rewards.spiritualStones = Math.floor(Math.random() * (max - min + 1)) + min
   }
 
+  if (rewardConfig.enlightenmentExp && Math.random() < rewardConfig.enlightenmentExp.probability) {
+    const [min, max] = rewardConfig.enlightenmentExp.range
+    const amount = Math.floor(Math.random() * (max - min + 1)) + min
+    rewards.enlightenmentExp = amount
+    rewards.enlightenmentPath = rewardConfig.enlightenmentExp.path
+  }
+
   return rewards
 }
 

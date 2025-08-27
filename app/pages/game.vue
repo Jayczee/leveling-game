@@ -86,6 +86,7 @@
     <FloatingActionButtons
       @open-exploration="showExplorationDialog = true"
       @open-time-treasure="showTimeTreasureDialog = true"
+      @open-enlightenment="showEnlightenmentDialog = true"
     />
 
     <!-- 探险弹窗 -->
@@ -96,6 +97,11 @@
     <!-- 时光法宝弹窗 -->
     <TimeTreasureDialog
       v-model:show="showTimeTreasureDialog"
+    />
+
+    <!-- 悟道弹窗 -->
+    <EnlightenmentDialog
+      v-model:show="showEnlightenmentDialog"
     />
   </div>
 </template>
@@ -121,6 +127,7 @@ const showMobileMenu = ref(false)
 // 弹窗状态
 const showExplorationDialog = ref(false)
 const showTimeTreasureDialog = ref(false)
+const showEnlightenmentDialog = ref(false)
 
 // 计算属性
 const character = computed(() => characterStore.character)
