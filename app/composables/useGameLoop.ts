@@ -1,5 +1,5 @@
 import { ref, onMounted, onUnmounted, readonly } from 'vue'
-import { GAME_CONFIG } from '~/utils/constants'
+import { GAME_CONFIG, STORAGE_ITEMS } from '~/utils/constants'
 
 export function useGameLoop() {
   const gameStore = useGameStore()
@@ -163,27 +163,43 @@ export function useGameEvents() {
     if (result && characterStore.character) {
       // 应用总奖励
       if (result.totalRewards.spiritualQi) {
-        characterStore.gainQiExperience(result.totalRewards.spiritualQi)
+        // 将练气经验转换为聚气丹
+        const qiPillCount = Math.max(1, Math.floor(result.totalRewards.spiritualQi / 100))
+        characterStore.addStorageItem('QI_PILL', qiPillCount)
+        gameStore.addMessage(`获得聚气丹 x${qiPillCount}`, 'success')
       }
       if (result.totalRewards.spiritualStones) {
-        characterStore.gainBodyExperience(result.totalRewards.spiritualStones)
+        // 将炼体经验转换为锻体丹
+        const bodyPillCount = Math.max(1, Math.floor(result.totalRewards.spiritualStones / 100))
+        characterStore.addStorageItem('BODY_PILL', bodyPillCount)
+        gameStore.addMessage(`获得锻体丹 x${bodyPillCount}`, 'success')
       }
       if (result.totalRewards.spiritCrystals) {
         characterStore.gainResources({ spiritCrystals: result.totalRewards.spiritCrystals })
       }
       if (result.totalRewards.divinePower) {
-        characterStore.gainDivinePower(result.totalRewards.divinePower)
+        // 将神通奖励改为对应的秘籍
+        const manualMapping: Record<string, string> = {
+          'IRON_BONE': 'IRON_BONE_MANUAL',
+          'GOLDEN_BODY': 'GOLDEN_BODY_MANUAL',
+          'DIVINE_STRENGTH': 'DIVINE_STRENGTH_MANUAL',
+          'VAJRA_BODY': 'VAJRA_BODY_MANUAL',
+          'IMMORTAL_FLESH': 'IMMORTAL_FLESH_MANUAL',
+          'DRAGON_ELEPHANT_POWER': 'DRAGON_ELEPHANT_MANUAL'
+        }
+        
+        const manualId = manualMapping[result.totalRewards.divinePower]
+        if (manualId && STORAGE_ITEMS[manualId]) {
+          characterStore.addStorageItem(manualId, 1)
+          const item = STORAGE_ITEMS[manualId]
+          gameStore.addMessage(`获得${item.name}`, 'success')
+        }
       }
       if (result.totalRewards.enlightenmentExp) {
         // 使用指定的道，如果没有指定则随机选择
         const path = result.totalRewards.enlightenmentPath ||
           ['metal', 'wood', 'water', 'fire', 'earth', 'time', 'space'][Math.floor(Math.random() * 7)]
         characterStore.gainEnlightenmentExperience(path, result.totalRewards.enlightenmentExp)
-      }
-
-      // 如果有奖励，显示奖励信息
-      if (Object.keys(result.totalRewards).length > 0) {
-        gameStore.addMessage(`获得奖励：${formatRewards(result.totalRewards)}`, 'success')
       }
     }
   }

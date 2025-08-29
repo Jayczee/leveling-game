@@ -88,6 +88,7 @@
       @open-time-treasure="showTimeTreasureDialog = true"
       @open-enlightenment="showEnlightenmentDialog = true"
       @open-divine-power="showDivinePowerDialog = true"
+      @open-storage-ring="showStorageRingDialog = true"
     />
 
     <!-- 探险弹窗 -->
@@ -108,6 +109,11 @@
     <!-- 神通弹窗 -->
     <DivinePowerDialog
       v-model:show="showDivinePowerDialog"
+    />
+
+    <!-- 储物戒弹窗 -->
+    <StorageRingDialog
+      v-model:show="showStorageRingDialog"
     />
   </div>
 </template>
@@ -135,6 +141,7 @@ const showExplorationDialog = ref(false)
 const showTimeTreasureDialog = ref(false)
 const showEnlightenmentDialog = ref(false)
 const showDivinePowerDialog = ref(false)
+const showStorageRingDialog = ref(false)
 
 // 计算属性
 const character = computed(() => characterStore.character)

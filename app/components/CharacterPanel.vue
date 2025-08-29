@@ -21,6 +21,17 @@
           <span class="text-ink-800">{{ currentTalent?.name }}</span>
         </div>
         <div class="flex justify-between">
+          <span class="text-ink-600">时光法宝：</span>
+          <span class="text-ink-800">
+            <span v-if="currentTimeTreasure" class="flex items-center space-x-1">
+              <span>{{ currentTimeTreasure.icon }}</span>
+              <span>{{ currentTimeTreasure.name }}</span>
+              <span class="text-gold-600 font-medium">({{ currentTimeTreasure.speedMultiplier }}x)</span>
+            </span>
+            <span v-else class="text-ink-500">未装备</span>
+          </span>
+        </div>
+        <div class="flex justify-between">
           <span class="text-ink-600">总战力：</span>
           <span class="text-gold-500 font-medium">{{ formatNumber(totalPower) }}</span>
         </div>
@@ -238,6 +249,12 @@
           +金之道
         </button>
         <button
+          @click="characterStore.addPresetTimeTreasures()"
+          class="px-2 py-1 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
+        >
+          +时光法宝
+        </button>
+        <button
           @click="characterStore.fillCurrentLevelExperience()"
           class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors col-span-2"
         >
@@ -300,6 +317,7 @@ const showTestPanel = ref(false)
 const character = computed(() => characterStore.character)
 const currentTalent = computed(() => characterStore.currentTalent)
 const currentCultivationPath = computed(() => characterStore.getCurrentCultivationPath())
+const currentTimeTreasure = computed(() => characterStore.getCurrentTimeTreasure())
 const totalPower = computed(() => characterStore.totalPower)
 const currentQiLevelInfo = computed(() => characterStore.currentQiLevelInfo)
 const currentBodyLevelInfo = computed(() => characterStore.currentBodyLevelInfo)

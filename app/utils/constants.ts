@@ -394,6 +394,154 @@ export const ENLIGHTENMENT_PATHS: Record<string, EnlightenmentPath> = {
   }
 } as const
 
+// 储物戒物品品质
+export enum StorageItemQuality {
+  COMMON = 'common',
+  RARE = 'rare',
+  EPIC = 'epic',
+  LEGENDARY = 'legendary'
+}
+
+// 储物戒物品类型
+export enum StorageItemType {
+  CONSUMABLE = 'consumable',
+  MATERIAL = 'material',
+  MANUAL = 'manual'
+}
+
+// 储物戒物品配置接口
+export interface StorageItem {
+  id: string
+  name: string
+  description: string
+  type: StorageItemType
+  quality: StorageItemQuality
+  icon: string
+  maxStack: number
+  effects?: {
+    // 练气经验
+    qiExperience?: number
+    // 炼体经验
+    bodyExperience?: number
+    // 神通ID（用于秘籍类物品）
+    divinePowerId?: string
+    // 神通经验（用于秘籍类物品）
+    divinePowerExperience?: number
+  }
+}
+
+// 储物戒物品库存项
+export interface StorageItemStack {
+  itemId: string
+  quantity: number
+}
+
+// 储物戒物品定义
+export const STORAGE_ITEMS: Record<string, StorageItem> = {
+  QI_PILL: {
+    id: 'qi_pill',
+    name: '聚气丹',
+    description: '蕴含丰富灵气的丹药，服用后能增加练气修为',
+    type: StorageItemType.CONSUMABLE,
+    quality: StorageItemQuality.COMMON,
+    icon: '💊',
+    maxStack: 999,
+    effects: {
+      qiExperience: 100
+    }
+  },
+  BODY_PILL: {
+    id: 'body_pill',
+    name: '锻体丹',
+    description: '强化肉身的丹药，服用后能增加炼体修为',
+    type: StorageItemType.CONSUMABLE,
+    quality: StorageItemQuality.COMMON,
+    icon: '🟤',
+    maxStack: 999,
+    effects: {
+      bodyExperience: 100
+    }
+  },
+  IRON_BONE_MANUAL: {
+    id: 'iron_bone_manual',
+    name: '铁骨神通秘籍',
+    description: '记载铁骨神通修炼法门的秘籍，使用后可获得铁骨神通或增加其经验',
+    type: StorageItemType.MANUAL,
+    quality: StorageItemQuality.COMMON,
+    icon: '📜',
+    maxStack: 99,
+    effects: {
+      divinePowerId: 'IRON_BONE',
+      divinePowerExperience: 10
+    }
+  },
+  GOLDEN_BODY_MANUAL: {
+    id: 'golden_body_manual',
+    name: '金身护体秘籍',
+    description: '记载金身护体神通修炼法门的秘籍，使用后可获得金身护体神通或增加其经验',
+    type: StorageItemType.MANUAL,
+    quality: StorageItemQuality.RARE,
+    icon: '📋',
+    maxStack: 99,
+    effects: {
+      divinePowerId: 'GOLDEN_BODY',
+      divinePowerExperience: 10
+    }
+  },
+  DIVINE_STRENGTH_MANUAL: {
+    id: 'divine_strength_manual',
+    name: '神力通天秘籍',
+    description: '记载神力通天神通修炼法门的秘籍，使用后可获得神力通天神通或增加其经验',
+    type: StorageItemType.MANUAL,
+    quality: StorageItemQuality.RARE,
+    icon: '📖',
+    maxStack: 99,
+    effects: {
+      divinePowerId: 'DIVINE_STRENGTH',
+      divinePowerExperience: 10
+    }
+  },
+  VAJRA_BODY_MANUAL: {
+    id: 'vajra_body_manual',
+    name: '金刚不坏秘籍',
+    description: '记载金刚不坏神通修炼法门的秘籍，使用后可获得金刚不坏神通或增加其经验',
+    type: StorageItemType.MANUAL,
+    quality: StorageItemQuality.EPIC,
+    icon: '📃',
+    maxStack: 99,
+    effects: {
+      divinePowerId: 'VAJRA_BODY',
+      divinePowerExperience: 10
+    }
+  },
+  IMMORTAL_FLESH_MANUAL: {
+    id: 'immortal_flesh_manual',
+    name: '不死血肉秘籍',
+    description: '记载不死血肉神通修炼法门的秘籍，使用后可获得不死血肉神通或增加其经验',
+    type: StorageItemType.MANUAL,
+    quality: StorageItemQuality.EPIC,
+    icon: '📄',
+    maxStack: 99,
+    effects: {
+      divinePowerId: 'IMMORTAL_FLESH',
+      divinePowerExperience: 10
+    }
+  },
+  DRAGON_ELEPHANT_MANUAL: {
+    id: 'dragon_elephant_manual',
+    name: '龙象般若秘籍',
+    description: '记载龙象般若神通修炼法门的秘籍，使用后可获得龙象般若神通或增加其经验',
+    type: StorageItemType.MANUAL,
+    quality: StorageItemQuality.LEGENDARY,
+    icon: '🗞️',
+    maxStack: 99,
+    effects: {
+      divinePowerId: 'DRAGON_ELEPHANT_POWER',
+      divinePowerExperience: 10
+    }
+  }
+} as const
+
 // 计算衍生属性
 export function calculateDerivedAttributes(constitution: number, spiritualPower: number) {
   // 基础值 + 属性加成

@@ -77,6 +77,18 @@
             <div class="text-sm text-ink-600">修炼神通，强化身体属性</div>
           </div>
         </button>
+
+        <!-- 储物戒按钮 -->
+        <button
+          @click="openStorageRing"
+          class="w-full flex items-center space-x-3 p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+        >
+          <span class="text-2xl">🎒</span>
+          <div class="text-left">
+            <div class="font-medium text-ink-800">储物戒</div>
+            <div class="text-sm text-ink-600">管理背包物品，使用消耗品</div>
+          </div>
+        </button>
       </div>
     </div>
   </div>
@@ -89,6 +101,7 @@ interface Emits {
   (e: 'openTimeTreasure'): void
   (e: 'openEnlightenment'): void
   (e: 'openDivinePower'): void
+  (e: 'openStorageRing'): void
 }
 
 const emit = defineEmits<Emits>()
@@ -122,6 +135,12 @@ function openEnlightenment() {
 // 打开神通
 function openDivinePower() {
   emit('openDivinePower')
+  closeFunctionMenu()
+}
+
+// 打开储物戒
+function openStorageRing() {
+  emit('openStorageRing')
   closeFunctionMenu()
 }
 </script>

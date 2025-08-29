@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { TALENTS, CULTIVATION_PATHS, TIME_TREASURES, ENLIGHTENMENT_PATHS, DIVINE_POWERS } from '~/utils/constants'
+import { TALENTS, CULTIVATION_PATHS, TIME_TREASURES, ENLIGHTENMENT_PATHS, DIVINE_POWERS, STORAGE_ITEMS, type StorageItemStack } from '~/utils/constants'
 import { QI_CULTIVATION_REALMS, BODY_CULTIVATION_REALMS, getCultivationLevelInfo, type CultivationLevel } from '~/utils/cultivation-levels'
 import { type AttributeModifier, calculateBaseDerivedAttributes, applyAttributeModifiers, getTalentModifier, getEnlightenmentModifier, getDivinePowerModifier } from '~/utils/attribute-system'
 import { 
@@ -85,6 +85,7 @@ export interface Character {
   // 拥有的物品
   inventory: {
     timeTreasures: string[]  // 拥有的时光法宝ID列表
+    storageRing: StorageItemStack[]  // 储物戒物品列表
   }
 
   // 统计
@@ -405,7 +406,12 @@ export const useCharacterStore = defineStore('character', {
           timeTreasure: null
         },
         inventory: {
-          timeTreasures: ['BRONZE_HOURGLASS', 'SILVER_CHRONOMETER'] // 初始拥有两个时光法宝
+          timeTreasures: ['bronze_hourglass', 'silver_chronometer'], // 初始拥有两个时光法宝（使用小写ID）
+          storageRing: [
+            { itemId: 'QI_PILL', quantity: 5 },
+            { itemId: 'BODY_PILL', quantity: 5 },
+            { itemId: 'IRON_BONE_MANUAL', quantity: 1 }
+          ]
         },
         stats: {
           totalPlayTime: 0,
@@ -446,6 +452,29 @@ export const useCharacterStore = defineStore('character', {
       // 处理旧存档兼容性 - 如果没有灵晶资源，则初始化
       if (character.resources && typeof character.resources.spiritCrystals === 'undefined') {
         character.resources.spiritCrystals = 0
+      }
+
+      // 处理旧存档兼容性 - 如果没有储物戒，则初始化
+      if (!character.inventory.storageRing) {
+        character.inventory.storageRing = [
+          { itemId: 'QI_PILL', quantity: 5 },
+          { itemId: 'BODY_PILL', quantity: 5 },
+          { itemId: 'IRON_BONE_MANUAL', quantity: 1 }
+        ]
+      }
+
+      // 处理时光法宝兼容性
+      if (!character.inventory.timeTreasures || character.inventory.timeTreasures.length === 0) {
+        // 如果没有时光法宝或为空数组，初始化预设法宝
+        character.inventory.timeTreasures = ['bronze_hourglass', 'silver_chronometer']
+      } else {
+        // 处理时光法宝ID大小写不匹配问题
+        character.inventory.timeTreasures = character.inventory.timeTreasures.map(id => {
+          // 将大写ID转换为小写ID
+          if (id === 'BRONZE_HOURGLASS') return 'bronze_hourglass'
+          if (id === 'SILVER_CHRONOMETER') return 'silver_chronometer'
+          return id
+        })
       }
 
       this.character = character
@@ -516,7 +545,10 @@ export const useCharacterStore = defineStore('character', {
 
     // 装备时光法宝
     equipTimeTreasure(treasureId: string | null) {
-      if (!this.character) return false
+      if (!this.character) {
+        return false
+      }
+      
       this.character.equipment.timeTreasure = treasureId
       return true
     },
@@ -524,7 +556,8 @@ export const useCharacterStore = defineStore('character', {
     // 获取当前装备的时光法宝
     getCurrentTimeTreasure() {
       if (!this.character?.equipment.timeTreasure) return null
-      return TIME_TREASURES[this.character.equipment.timeTreasure] || null
+      // Find treasure by matching the id field, not the key
+      return Object.values(TIME_TREASURES).find(t => t.id === this.character!.equipment.timeTreasure) || null
     },
 
     // 获取时光法宝加速倍率
@@ -1316,6 +1349,171 @@ export const useCharacterStore = defineStore('character', {
 
       // levelIndex现在指向下一个境界的第一级
       return levelIndex
+    },
+
+    // ===== 储物戒系统 =====
+
+    // 获取储物戒中的物品堆叠
+    getStorageItemStack(itemId: string): StorageItemStack | null {
+      if (!this.character) return null
+      return this.character.inventory.storageRing.find(stack => stack.itemId === itemId) || null
+    },
+
+    // 获取储物戒中物品的数量
+    getStorageItemQuantity(itemId: string): number {
+      const stack = this.getStorageItemStack(itemId)
+      return stack ? stack.quantity : 0
+    },
+
+    // 强制添加预设时光法宝（用于测试和修复）
+    addPresetTimeTreasures() {
+      if (!this.character) return false
+      
+      const presetTreasures = ['bronze_hourglass', 'silver_chronometer']
+      
+      // 确保 timeTreasures 数组存在
+      if (!this.character.inventory.timeTreasures) {
+        this.character.inventory.timeTreasures = []
+      }
+      
+      // 添加不存在的预设法宝
+      for (const treasureId of presetTreasures) {
+        if (!this.character.inventory.timeTreasures.includes(treasureId)) {
+          this.character.inventory.timeTreasures.push(treasureId)
+        }
+      }
+      
+      return true
+    },
+
+    // 添加物品到储物戒
+    addStorageItem(itemId: string, quantity: number = 1): boolean {
+      if (!this.character) return false
+
+      const item = STORAGE_ITEMS[itemId]
+      if (!item) return false
+
+      // 查找现有堆叠
+      const existingStack = this.character.inventory.storageRing.find(stack => stack.itemId === itemId)
+      
+      if (existingStack) {
+        // 检查是否超过最大堆叠数量
+        const newQuantity = existingStack.quantity + quantity
+        if (newQuantity > item.maxStack) {
+          return false
+        }
+        existingStack.quantity = newQuantity
+      } else {
+        // 创建新堆叠
+        if (quantity > item.maxStack) {
+          return false
+        }
+        this.character.inventory.storageRing.push({ itemId, quantity })
+      }
+
+      return true
+    },
+
+    // 移除储物戒中的物品
+    removeStorageItem(itemId: string, quantity: number = 1): boolean {
+      if (!this.character) return false
+
+      const stackIndex = this.character.inventory.storageRing.findIndex(stack => stack.itemId === itemId)
+      if (stackIndex === -1) return false
+
+      const stack = this.character.inventory.storageRing[stackIndex]
+      if (stack.quantity < quantity) return false
+
+      stack.quantity -= quantity
+
+      // 如果数量为0，移除堆叠
+      if (stack.quantity === 0) {
+        this.character.inventory.storageRing.splice(stackIndex, 1)
+      }
+
+      return true
+    },
+
+    // 使用储物戒中的物品
+    useStorageItem(itemId: string, quantity: number = 1): boolean {
+      if (!this.character) return false
+
+      const item = STORAGE_ITEMS[itemId]
+      if (!item || !item.effects) return false
+
+      // 检查是否有足够的物品
+      const currentQuantity = this.getStorageItemQuantity(itemId)
+      if (currentQuantity < quantity) return false
+
+      // 移除物品
+      if (!this.removeStorageItem(itemId, quantity)) {
+        return false
+      }
+
+      const gameStore = useGameStore()
+
+      // 应用物品效果
+      for (let i = 0; i < quantity; i++) {
+        if (item.effects.qiExperience) {
+          this.gainQiExperience(item.effects.qiExperience)
+          gameStore.addMessage(`使用${item.name}，练气经验+${item.effects.qiExperience}`, 'success')
+        }
+
+        if (item.effects.bodyExperience) {
+          this.gainBodyExperience(item.effects.bodyExperience)
+          gameStore.addMessage(`使用${item.name}，炼体经验+${item.effects.bodyExperience}`, 'success')
+        }
+
+        if (item.effects.divinePowerId) {
+          const powerId = item.effects.divinePowerId
+          const power = DIVINE_POWERS[powerId]
+          
+          if (!power) continue // 跳过无效的神通ID
+          
+          // 如果已经拥有该神通，增加经验（转换为灵晶）
+          if (this.hasDivinePower(powerId)) {
+            const experienceValue = item.effects.divinePowerExperience || 10
+            this.gainResources({ spiritCrystals: experienceValue })
+            gameStore.addMessage(`使用${item.name}，已拥有${power.name}，获得${experienceValue}灵晶`, 'success')
+          } else {
+            // 获得新神通
+            const success = this.gainDivinePower(powerId)
+            if (success) {
+              gameStore.addMessage(`使用${item.name}，习得神通：${power.name}`, 'success')
+            }
+          }
+        }
+      }
+
+      return true
+    },
+
+    // 丢弃储物戒中的物品
+    discardStorageItem(itemId: string, quantity: number = 1): boolean {
+      if (!this.character) return false
+
+      const item = STORAGE_ITEMS[itemId]
+      if (!item) return false
+
+      // 检查是否有足够的物品
+      const currentQuantity = this.getStorageItemQuantity(itemId)
+      if (currentQuantity < quantity) return false
+
+      // 移除物品
+      const success = this.removeStorageItem(itemId, quantity)
+      if (success) {
+        const gameStore = useGameStore()
+        gameStore.addMessage(`丢弃${item.name} x${quantity}`, 'info')
+      }
+
+      return success
+    },
+
+    // 获取储物戒容量信息
+    getStorageRingCapacity(): { used: number; total: number } {
+      const used = this.character?.inventory.storageRing.length || 0
+      const total = 40 // 8x5 grid
+      return { used, total }
     }
   }
 })
