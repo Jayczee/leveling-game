@@ -1422,7 +1422,7 @@ export const useCharacterStore = defineStore('character', {
       if (stackIndex === -1) return false
 
       const stack = this.character.inventory.storageRing[stackIndex]
-      if (stack.quantity < quantity) return false
+      if (!stack || stack.quantity < quantity) return false
 
       stack.quantity -= quantity
 
