@@ -69,7 +69,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
     fromRealmId: 'qi_gathering',
     toRealmId: 'qi_refining', 
     cultivationType: 'qi',
-    baseSuccessRate: 0.95,
+    baseSuccessRate: 0.80,
     conditions: {
       required: {
         enlightenmentTotalLevel: 3  // 悟道总等级达到3级
@@ -77,7 +77,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
       optional: {
         enlightenmentTotalLevel: {
           level: 8,  // 悟道总等级8级
-          successRateBonus: 3  // 额外3%成功率
+          successRateBonus: 10  // 额外10%成功率
         }
       }
     }
@@ -88,7 +88,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
     fromRealmId: 'qi_refining',
     toRealmId: 'foundation_building',
     cultivationType: 'qi', 
-    baseSuccessRate: 0.85,
+    baseSuccessRate: 0.65,
     conditions: {
       required: {
         enlightenmentTotalLevel: 8  // 悟道总等级达到8级
@@ -96,7 +96,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
       optional: {
         enlightenmentTotalLevel: {
           level: 15,  // 悟道总等级15级
-          successRateBonus: 5  // 额外5%成功率
+          successRateBonus: 15  // 额外15%成功率
         }
       }
     }
@@ -107,7 +107,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
     fromRealmId: 'foundation_building',
     toRealmId: 'golden_core',
     cultivationType: 'qi',
-    baseSuccessRate: 0.75,
+    baseSuccessRate: 0.50,
     conditions: {
       required: {
         enlightenmentTotalLevel: 15  // 悟道总等级达到15级
@@ -115,7 +115,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
       optional: {
         enlightenmentTotalLevel: {
           level: 25,  // 悟道总等级25级
-          successRateBonus: 8  // 额外8%成功率
+          successRateBonus: 20  // 额外20%成功率
         }
       }
     }
@@ -126,7 +126,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
     fromRealmId: 'golden_core',
     toRealmId: 'nascent_soul',
     cultivationType: 'qi',
-    baseSuccessRate: 0.65,
+    baseSuccessRate: 0.40,
     conditions: {
       required: {
         enlightenmentTotalLevel: 25,  // 悟道总等级达到25级
@@ -135,11 +135,11 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
       optional: {
         enlightenmentTotalLevel: {
           level: 40,  // 悟道总等级40级
-          successRateBonus: 8  // 额外8%成功率
+          successRateBonus: 20  // 额外20%成功率
         },
         highestEnlightenmentLevel: {
           level: 12,  // 最高道等级12级
-          successRateBonus: 5  // 额外5%成功率
+          successRateBonus: 15  // 额外15%成功率
         }
       }
     }
@@ -150,7 +150,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
     fromRealmId: 'nascent_soul',
     toRealmId: 'soul_transformation',
     cultivationType: 'qi',
-    baseSuccessRate: 0.55,
+    baseSuccessRate: 0.30,
     conditions: {
       required: {
         enlightenmentTotalLevel: 40,  // 悟道总等级达到40级
@@ -159,11 +159,11 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
       optional: {
         enlightenmentTotalLevel: {
           level: 60,  // 悟道总等级60级
-          successRateBonus: 10  // 额外10%成功率
+          successRateBonus: 25  // 额外25%成功率
         },
         highestEnlightenmentLevel: {
           level: 18,  // 最高道等级18级
-          successRateBonus: 7  // 额外7%成功率
+          successRateBonus: 20  // 额外20%成功率
         }
       }
     }
@@ -174,7 +174,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
     fromRealmId: 'soul_transformation',
     toRealmId: 'void_refinement',
     cultivationType: 'qi',
-    baseSuccessRate: 0.45,
+    baseSuccessRate: 0.25,
     conditions: {
       required: {
         enlightenmentTotalLevel: 60,  // 悟道总等级达到60级
@@ -183,11 +183,11 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
       optional: {
         enlightenmentTotalLevel: {
           level: 90,  // 悟道总等级90级
-          successRateBonus: 12  // 额外12%成功率
+          successRateBonus: 30  // 额外30%成功率
         },
         highestEnlightenmentLevel: {
           level: 25,  // 最高道等级25级
-          successRateBonus: 8  // 额外8%成功率
+          successRateBonus: 25  // 额外25%成功率
         }
       }
     }
@@ -198,7 +198,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
     fromRealmId: 'void_refinement',
     toRealmId: 'unity_dao',
     cultivationType: 'qi',
-    baseSuccessRate: 0.35,
+    baseSuccessRate: 0.15,
     conditions: {
       required: {
         enlightenmentTotalLevel: 90,  // 悟道总等级达到90级
@@ -207,11 +207,11 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
       optional: {
         enlightenmentTotalLevel: {
           level: 140,  // 悟道总等级140级
-          successRateBonus: 15  // 额外15%成功率
+          successRateBonus: 35  // 额外35%成功率
         },
         highestEnlightenmentLevel: {
           level: 35,  // 最高道等级35级
-          successRateBonus: 10  // 额外10%成功率
+          successRateBonus: 30  // 额外30%成功率
         }
       }
     }
@@ -223,7 +223,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
     fromRealmId: 'body_tempering',
     toRealmId: 'body_forging',
     cultivationType: 'body',
-    baseSuccessRate: 0.95,
+    baseSuccessRate: 0.80,
     conditions: {
       required: {
         // 前期无神通要求，降低门槛
@@ -231,7 +231,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
       optional: {
         divinePowerTotalLevel: {
           level: 3,  // 神通等级总和3级
-          successRateBonus: 10  // 额外10%成功率
+          successRateBonus: 15  // 额外15%成功率
         }
       }
     }
@@ -242,7 +242,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
     fromRealmId: 'body_forging',
     toRealmId: 'bone_refining',
     cultivationType: 'body',
-    baseSuccessRate: 0.85,
+    baseSuccessRate: 0.65,
     conditions: {
       required: {
         // 前期无神通要求，降低门槛
@@ -250,7 +250,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
       optional: {
         divinePowerTotalLevel: {
           level: 5,  // 神通等级总和5级
-          successRateBonus: 10  // 额外10%成功率
+          successRateBonus: 20  // 额外20%成功率
         }
       }
     }
@@ -261,7 +261,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
     fromRealmId: 'bone_refining',
     toRealmId: 'blood_transformation',
     cultivationType: 'body',
-    baseSuccessRate: 0.75,
+    baseSuccessRate: 0.50,
     conditions: {
       required: {
         divinePowerTotalLevel: 8  // 开始需要神通等级总和8级
@@ -269,7 +269,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
       optional: {
         divinePowerTotalLevel: {
           level: 15,  // 神通等级总和15级
-          successRateBonus: 12  // 额外12%成功率
+          successRateBonus: 25  // 额外25%成功率
         }
       }
     }
@@ -280,7 +280,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
     fromRealmId: 'blood_transformation',
     toRealmId: 'muscle_transformation',
     cultivationType: 'body',
-    baseSuccessRate: 0.65,
+    baseSuccessRate: 0.40,
     conditions: {
       required: {
         divinePowerTotalLevel: 15  // 神通等级总和至少15级
@@ -288,7 +288,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
       optional: {
         divinePowerTotalLevel: {
           level: 25,  // 神通等级总和25级
-          successRateBonus: 12  // 额外12%成功率
+          successRateBonus: 25  // 额外25%成功率
         }
       }
     }
@@ -299,7 +299,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
     fromRealmId: 'muscle_transformation',
     toRealmId: 'marrow_cleansing',
     cultivationType: 'body',
-    baseSuccessRate: 0.50,
+    baseSuccessRate: 0.30,
     conditions: {
       required: {
         divinePowerTotalLevel: 35  // 神通等级总和至少35级
@@ -307,7 +307,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
       optional: {
         divinePowerTotalLevel: {
           level: 50,  // 神通等级总和50级
-          successRateBonus: 15  // 额外15%成功率
+          successRateBonus: 30  // 额外30%成功率
         }
       }
     }
@@ -318,7 +318,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
     fromRealmId: 'marrow_cleansing',
     toRealmId: 'divine_body',
     cultivationType: 'body',
-    baseSuccessRate: 0.40,
+    baseSuccessRate: 0.25,
     conditions: {
       required: {
         divinePowerTotalLevel: 50  // 神通等级总和至少50级
@@ -326,7 +326,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
       optional: {
         divinePowerTotalLevel: {
           level: 70,  // 神通等级总和70级
-          successRateBonus: 18  // 额外18%成功率
+          successRateBonus: 30  // 额外30%成功率
         }
       }
     }
@@ -337,7 +337,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
     fromRealmId: 'divine_body',
     toRealmId: 'immortal_body',
     cultivationType: 'body',
-    baseSuccessRate: 0.30,
+    baseSuccessRate: 0.15,
     conditions: {
       required: {
         divinePowerTotalLevel: 70  // 神通等级总和至少70级
@@ -345,7 +345,7 @@ export const BREAKTHROUGH_CONFIGS: Record<string, RealmBreakthroughConfig> = {
       optional: {
         divinePowerTotalLevel: {
           level: 100,  // 神通等级总和100级
-          successRateBonus: 25  // 额外25%成功率
+          successRateBonus: 35  // 额外35%成功率
         }
       }
     }

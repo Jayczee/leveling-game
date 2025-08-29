@@ -252,13 +252,15 @@ export const useGameStore = defineStore('game', {
 
       switch (activity.type) {
         case 'cultivation':
-          // 修炼获得练气经验，直接使用修炼方向的灵气获取效率
-          const cultivationPath = characterStore.getCurrentCultivationPath()
-          const qiEfficiency = cultivationPath?.effects.spiritualQiEfficiency || 1
+          // 检查是否可以获得练气经验
+          if (characterStore.canGainQiExperience) {
+            // 修炼获得练气经验，直接使用修炼方向的灵气获取效率
+            const cultivationPath = characterStore.getCurrentCultivationPath()
+            const qiEfficiency = cultivationPath?.effects.spiritualQiEfficiency || 1
 
-          const qiExpGain = baseGain * qiEfficiency
-
-          characterStore.gainQiExperience(qiExpGain)
+            const qiExpGain = baseGain * qiEfficiency
+            characterStore.gainQiExperience(qiExpGain)
+          }
 
           // 打坐修炼时有几率获得悟道经验
           const baseProbability = 0.1 // 10%基础概率
@@ -274,12 +276,15 @@ export const useGameStore = defineStore('game', {
           break
 
         case 'body':
-          // 炼体获得炼体经验，直接使用修炼方向的体质成长效率
-          const bodyPath = characterStore.getCurrentCultivationPath()
-          const bodyEfficiency = bodyPath?.effects.constitutionGrowthRate || 1
+          // 检查是否可以获得炼体经验
+          if (characterStore.canGainBodyExperience) {
+            // 炼体获得炼体经验，直接使用修炼方向的体质成长效率
+            const bodyPath = characterStore.getCurrentCultivationPath()
+            const bodyEfficiency = bodyPath?.effects.constitutionGrowthRate || 1
 
-          const bodyExpGain = baseGain * bodyEfficiency
-          characterStore.gainBodyExperience(bodyExpGain)
+            const bodyExpGain = baseGain * bodyEfficiency
+            characterStore.gainBodyExperience(bodyExpGain)
+          }
           break
 
         case 'adventure':
@@ -346,11 +351,14 @@ export const useGameStore = defineStore('game', {
 
       switch (activity.type) {
         case 'cultivation':
-          const cultivationPath = characterStore.getCurrentCultivationPath()
-          const qiEfficiency = cultivationPath?.effects.spiritualQiEfficiency || 1
-          const qiExpGain = baseGain * qiEfficiency
-          characterStore.gainQiExperience(qiExpGain)
-          offlineRewards.push(`练气经验+${Math.floor(qiExpGain)}`)
+          // 检查是否可以获得练气经验
+          if (characterStore.canGainQiExperience) {
+            const cultivationPath = characterStore.getCurrentCultivationPath()
+            const qiEfficiency = cultivationPath?.effects.spiritualQiEfficiency || 1
+            const qiExpGain = baseGain * qiEfficiency
+            characterStore.gainQiExperience(qiExpGain)
+            offlineRewards.push(`练气经验+${Math.floor(qiExpGain)}`)
+          }
 
           // 离线修炼时也计算悟道经验
           const baseProbability = 0.1 // 10%基础概率每秒
@@ -375,11 +383,14 @@ export const useGameStore = defineStore('game', {
           break
 
         case 'body':
-          const bodyPath = characterStore.getCurrentCultivationPath()
-          const bodyEfficiency = bodyPath?.effects.constitutionGrowthRate || 1
-          const bodyExpGain = baseGain * bodyEfficiency
-          characterStore.gainBodyExperience(bodyExpGain)
-          offlineRewards.push(`炼体经验+${Math.floor(bodyExpGain)}`)
+          // 检查是否可以获得炼体经验
+          if (characterStore.canGainBodyExperience) {
+            const bodyPath = characterStore.getCurrentCultivationPath()
+            const bodyEfficiency = bodyPath?.effects.constitutionGrowthRate || 1
+            const bodyExpGain = baseGain * bodyEfficiency
+            characterStore.gainBodyExperience(bodyExpGain)
+            offlineRewards.push(`炼体经验+${Math.floor(bodyExpGain)}`)
+          }
           break
       }
 

@@ -1258,11 +1258,13 @@ export const useCharacterStore = defineStore('character', {
           gameStore.addMessage(result.message, 'success')
         }
       } else {
-        // 突破失败：显示失败消息
+        // 突破失败：显示失败消息并实施惩罚
         const gameStore = useGameStore()
         gameStore.addMessage(result.message, 'error')
         
-        // TODO: 可以在这里添加失败惩罚，比如损失一些资源
+        // 突破失败惩罚：清零当前练气经验
+        this.character.resources.spiritualQi = 0
+        gameStore.addMessage('突破失败，练气经验清零', 'error')
       }
 
       return result
@@ -1311,11 +1313,13 @@ export const useCharacterStore = defineStore('character', {
           gameStore.addMessage(result.message, 'success')
         }
       } else {
-        // 突破失败：显示失败消息
+        // 突破失败：显示失败消息并实施惩罚
         const gameStore = useGameStore()
         gameStore.addMessage(result.message, 'error')
         
-        // TODO: 可以在这里添加失败惩罚，比如损失一些资源
+        // 突破失败惩罚：清零当前炼体经验
+        this.character.resources.spiritualStones = 0
+        gameStore.addMessage('突破失败，炼体经验清零', 'error')
       }
 
       return result
