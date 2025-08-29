@@ -2,6 +2,15 @@ import { defineStore } from 'pinia'
 import { TALENTS, CULTIVATION_PATHS, TIME_TREASURES, ENLIGHTENMENT_PATHS, DIVINE_POWERS } from '~/utils/constants'
 import { QI_CULTIVATION_REALMS, BODY_CULTIVATION_REALMS, getCultivationLevelInfo, type CultivationLevel } from '~/utils/cultivation-levels'
 import { type AttributeModifier, calculateBaseDerivedAttributes, applyAttributeModifiers, getTalentModifier, getEnlightenmentModifier, getDivinePowerModifier } from '~/utils/attribute-system'
+import { 
+  getBreakthroughConfig, 
+  checkBreakthroughConditions, 
+  calculateBreakthroughSuccessRate,
+  attemptBreakthrough,
+  type RealmBreakthroughConfig,
+  type BreakthroughResult
+} from '~/utils/breakthrough-system'
+import { useGameStore } from '~/stores/game'
 
 export interface Character {
   // 基础信息
@@ -233,6 +242,80 @@ export const useCharacterStore = defineStore('character', {
 
       // 如果是当前境界的最后一级且经验满，显示突破按钮
       return isLastLevelInRealm
+    },
+
+    // ===== 大境界突破相关 Getters =====
+    
+    // 获取练气大境界突破配置
+    qiRealmBreakthroughConfig: (state): RealmBreakthroughConfig | null => {
+      if (!state.character) return null
+      const currentLevelInfo = getCultivationLevelInfo(state.character.cultivation.qiCultivation.level, QI_CULTIVATION_REALMS)
+      if (!currentLevelInfo?.realm) return null
+      
+      return getBreakthroughConfig(currentLevelInfo.realm.id, 'qi')
+    },
+
+    // 获取炼体大境界突破配置
+    bodyRealmBreakthroughConfig: (state): RealmBreakthroughConfig | null => {
+      if (!state.character) return null
+      const currentLevelInfo = getCultivationLevelInfo(state.character.cultivation.bodyCultivation.level, BODY_CULTIVATION_REALMS)
+      if (!currentLevelInfo?.realm) return null
+      
+      return getBreakthroughConfig(currentLevelInfo.realm.id, 'body')
+    },
+
+    // 检查练气大境界是否需要突破（境界最后一级且达到经验要求且有突破配置）
+    needQiRealmBreakthrough(): boolean {
+      return this.needQiBreakthrough && this.qiRealmBreakthroughConfig !== null
+    },
+
+    // 检查炼体大境界是否需要突破（境界最后一级且达到经验要求且有突破配置）
+    needBodyRealmBreakthrough(): boolean {
+      return this.needBodyBreakthrough && this.bodyRealmBreakthroughConfig !== null
+    },
+
+    // 检查练气突破条件
+    qiBreakthroughConditions(): { canBreakthrough: boolean; details: { required: string[]; optional: string[] } } | null {
+      if (!this.character || !this.qiRealmBreakthroughConfig) return null
+      
+      return checkBreakthroughConditions(
+        this.qiRealmBreakthroughConfig,
+        this.character.enlightenment.paths,
+        this.character.divinePowers
+      )
+    },
+
+    // 检查炼体突破条件
+    bodyBreakthroughConditions(): { canBreakthrough: boolean; details: { required: string[]; optional: string[] } } | null {
+      if (!this.character || !this.bodyRealmBreakthroughConfig) return null
+      
+      return checkBreakthroughConditions(
+        this.bodyRealmBreakthroughConfig,
+        this.character.enlightenment.paths,
+        this.character.divinePowers
+      )
+    },
+
+    // 计算练气突破成功率
+    qiBreakthroughSuccessRate(): { finalRate: number; optionalBonus: number; breakdown: string[] } | null {
+      if (!this.character || !this.qiRealmBreakthroughConfig) return null
+      
+      return calculateBreakthroughSuccessRate(
+        this.qiRealmBreakthroughConfig,
+        this.character.enlightenment.paths,
+        this.character.divinePowers
+      )
+    },
+
+    // 计算炼体突破成功率
+    bodyBreakthroughSuccessRate(): { finalRate: number; optionalBonus: number; breakdown: string[] } | null {
+      if (!this.character || !this.bodyRealmBreakthroughConfig) return null
+      
+      return calculateBreakthroughSuccessRate(
+        this.bodyRealmBreakthroughConfig,
+        this.character.enlightenment.paths,
+        this.character.divinePowers
+      )
     }
   },
 
@@ -596,7 +679,15 @@ export const useCharacterStore = defineStore('character', {
           const nextLevelIndex = this.character.cultivation.qiCultivation.level + 1
           const nextLevelInfo = getCultivationLevelInfo(nextLevelIndex, QI_CULTIVATION_REALMS)
 
-          // 如果有下一级，则升级
+          // 检查是否在当前境界的最后一级
+          const isLastLevelInRealm = currentLevelInfo.levelInRealm === currentLevelInfo.realm!.levels.length - 1
+
+          // 如果是境界最后一级，停止自动升级，等待大境界突破
+          if (isLastLevelInRealm) {
+            break
+          }
+
+          // 如果有下一级且不是境界最后一级，则升级
           if (nextLevelInfo.levelInfo) {
             this.character.resources.spiritualQi -= currentLevelInfo.levelInfo.requiredExp
             this.character.cultivation.qiCultivation.level += 1
@@ -634,7 +725,15 @@ export const useCharacterStore = defineStore('character', {
           const nextLevelIndex = this.character.cultivation.bodyCultivation.level + 1
           const nextLevelInfo = getCultivationLevelInfo(nextLevelIndex, BODY_CULTIVATION_REALMS)
 
-          // 如果有下一级，则升级
+          // 检查是否在当前境界的最后一级
+          const isLastLevelInRealm = currentLevelInfo.levelInRealm === currentLevelInfo.realm!.levels.length - 1
+
+          // 如果是境界最后一级，停止自动升级，等待大境界突破
+          if (isLastLevelInRealm) {
+            break
+          }
+
+          // 如果有下一级且不是境界最后一级，则升级
           if (nextLevelInfo.levelInfo) {
             this.character.resources.spiritualStones -= currentLevelInfo.levelInfo.requiredExp
             this.character.cultivation.bodyCultivation.level += 1
@@ -842,6 +941,80 @@ export const useCharacterStore = defineStore('character', {
       console.log('=== 测试完成 ===')
     },
 
+    // ===== 测试相关方法 =====
+
+    // 快速获得练气经验（测试用）
+    addTestQiExperience(amount: number = 200) {
+      if (!this.character) return
+      
+      this.gainQiExperience(amount)
+      
+      const gameStore = useGameStore()
+      gameStore.addMessage(`测试：获得${amount}练气经验`, 'info')
+    },
+
+    // 快速获得炼体经验（测试用）
+    addTestBodyExperience(amount: number = 200) {
+      if (!this.character) return
+      
+      this.gainBodyExperience(amount)
+      
+      const gameStore = useGameStore()
+      gameStore.addMessage(`测试：获得${amount}炼体经验`, 'info')
+    },
+
+    // 快速获得灵晶（测试用）
+    addTestSpiritCrystals(amount: number = 500) {
+      if (!this.character) return
+      
+      this.gainResources({ spiritCrystals: amount })
+      
+      const gameStore = useGameStore()
+      gameStore.addMessage(`测试：获得${amount}灵晶`, 'info')
+    },
+
+    // 快速获得悟道经验（测试用）
+    addTestEnlightenmentExperience(pathId: string = 'metal', amount: number = 50) {
+      if (!this.character) return
+      
+      this.gainEnlightenmentExperience(pathId, amount)
+      
+      const gameStore = useGameStore()
+      const pathNames: Record<string, string> = {
+        metal: '金之道',
+        wood: '木之道',
+        water: '水之道', 
+        fire: '火之道',
+        earth: '土之道',
+        time: '时间之道',
+        space: '空间之道'
+      }
+      const pathName = pathNames[pathId] || pathId
+      gameStore.addMessage(`测试：${pathName}获得${amount}悟道经验`, 'info')
+    },
+
+    // 一键满经验（测试用）
+    fillCurrentLevelExperience() {
+      if (!this.character) return
+
+      // 填满练气经验到当前等级要求
+      const qiLevelInfo = this.currentQiLevelInfo
+      if (qiLevelInfo?.levelInfo && this.character.resources.spiritualQi < qiLevelInfo.levelInfo.requiredExp) {
+        const needed = qiLevelInfo.levelInfo.requiredExp - this.character.resources.spiritualQi
+        this.gainQiExperience(needed)
+      }
+
+      // 填满炼体经验到当前等级要求
+      const bodyLevelInfo = this.currentBodyLevelInfo
+      if (bodyLevelInfo?.levelInfo && this.character.resources.spiritualStones < bodyLevelInfo.levelInfo.requiredExp) {
+        const needed = bodyLevelInfo.levelInfo.requiredExp - this.character.resources.spiritualStones
+        this.gainBodyExperience(needed)
+      }
+
+      const gameStore = useGameStore()
+      gameStore.addMessage('测试：当前等级经验已填满', 'success')
+    },
+
     // 神通系统相关方法
 
     // 获得神通
@@ -1005,6 +1178,144 @@ export const useCharacterStore = defineStore('character', {
       console.log(bonuses)
 
       console.log('=== 测试完成 ===')
+    },
+
+    // ===== 大境界突破系统 =====
+
+    // 尝试练气大境界突破
+    attemptQiRealmBreakthrough(): BreakthroughResult | null {
+      if (!this.character || !this.qiRealmBreakthroughConfig) {
+        return null
+      }
+
+      // 执行突破尝试
+      const result = attemptBreakthrough(
+        this.qiRealmBreakthroughConfig,
+        this.character.enlightenment.paths,
+        this.character.divinePowers
+      )
+
+      // 增加突破尝试次数统计
+      this.character.stats.breakthroughAttempts++
+
+      if (result.success) {
+        // 突破成功：跳到下一个大境界的第一个小等级
+        const nextRealmFirstLevelIndex = this.getNextRealmFirstLevelIndex('qi')
+        if (nextRealmFirstLevelIndex !== -1) {
+          // 消耗当前等级所需经验
+          const currentLevelInfo = this.currentQiLevelInfo
+          if (currentLevelInfo?.levelInfo) {
+            this.character.resources.spiritualQi -= currentLevelInfo.levelInfo.requiredExp
+          }
+
+          // 设置到下一境界第一级
+          this.character.cultivation.qiCultivation.level = nextRealmFirstLevelIndex
+          
+          // 应用新等级的奖励
+          const newLevelInfo = getCultivationLevelInfo(nextRealmFirstLevelIndex, QI_CULTIVATION_REALMS)
+          if (newLevelInfo.levelInfo) {
+            this.applyLevelRewards(newLevelInfo.levelInfo)
+          }
+
+          // 增加成功突破次数
+          this.character.stats.successfulBreakthroughs++
+
+          // 添加成功消息
+          const gameStore = useGameStore()
+          gameStore.addMessage(result.message, 'success')
+        }
+      } else {
+        // 突破失败：显示失败消息
+        const gameStore = useGameStore()
+        gameStore.addMessage(result.message, 'error')
+        
+        // TODO: 可以在这里添加失败惩罚，比如损失一些资源
+      }
+
+      return result
+    },
+
+    // 尝试炼体大境界突破
+    attemptBodyRealmBreakthrough(): BreakthroughResult | null {
+      if (!this.character || !this.bodyRealmBreakthroughConfig) {
+        return null
+      }
+
+      // 执行突破尝试
+      const result = attemptBreakthrough(
+        this.bodyRealmBreakthroughConfig,
+        this.character.enlightenment.paths,
+        this.character.divinePowers
+      )
+
+      // 增加突破尝试次数统计
+      this.character.stats.breakthroughAttempts++
+
+      if (result.success) {
+        // 突破成功：跳到下一个大境界的第一个小等级
+        const nextRealmFirstLevelIndex = this.getNextRealmFirstLevelIndex('body')
+        if (nextRealmFirstLevelIndex !== -1) {
+          // 消耗当前等级所需经验
+          const currentLevelInfo = this.currentBodyLevelInfo
+          if (currentLevelInfo?.levelInfo) {
+            this.character.resources.spiritualStones -= currentLevelInfo.levelInfo.requiredExp
+          }
+
+          // 设置到下一境界第一级
+          this.character.cultivation.bodyCultivation.level = nextRealmFirstLevelIndex
+          
+          // 应用新等级的奖励
+          const newLevelInfo = getCultivationLevelInfo(nextRealmFirstLevelIndex, BODY_CULTIVATION_REALMS)
+          if (newLevelInfo.levelInfo) {
+            this.applyLevelRewards(newLevelInfo.levelInfo)
+          }
+
+          // 增加成功突破次数
+          this.character.stats.successfulBreakthroughs++
+
+          // 添加成功消息
+          const gameStore = useGameStore()
+          gameStore.addMessage(result.message, 'success')
+        }
+      } else {
+        // 突破失败：显示失败消息
+        const gameStore = useGameStore()
+        gameStore.addMessage(result.message, 'error')
+        
+        // TODO: 可以在这里添加失败惩罚，比如损失一些资源
+      }
+
+      return result
+    },
+
+    // 获取下一个大境界的第一个小等级索引
+    getNextRealmFirstLevelIndex(cultivationType: 'qi' | 'body'): number {
+      if (!this.character) return -1
+
+      const realms = cultivationType === 'qi' ? QI_CULTIVATION_REALMS : BODY_CULTIVATION_REALMS
+      const currentLevel = cultivationType === 'qi' 
+        ? this.character.cultivation.qiCultivation.level 
+        : this.character.cultivation.bodyCultivation.level
+
+      const currentLevelInfo = getCultivationLevelInfo(currentLevel, realms)
+      if (!currentLevelInfo?.realm) return -1
+
+      // 找到当前境界在realms数组中的索引
+      const currentRealmIndex = realms.findIndex(realm => realm.id === currentLevelInfo.realm!.id)
+      if (currentRealmIndex === -1 || currentRealmIndex === realms.length - 1) return -1
+
+      // 计算下一个境界第一级的全局索引
+      // 下一个境界的第一级 = 所有之前境界的等级数之和（包括当前境界）
+      let levelIndex = 0
+      for (let i = 0; i <= currentRealmIndex; i++) {
+        const realm = realms[i]
+        if (realm) {
+          levelIndex += realm.levels.length
+        }
+      }
+
+      // levelIndex现在指向下一个境界的第一级
+      return levelIndex
     }
   }
 })

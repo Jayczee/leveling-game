@@ -86,7 +86,14 @@
             <div class="flex items-center space-x-2">
               <span class="text-ink-600 text-xs">{{ currentQiLevelInfo?.levelInfo?.name || '未入门' }}</span>
               <button
-                v-if="characterStore.needQiBreakthrough"
+                v-if="characterStore.needQiRealmBreakthrough"
+                class="px-2 py-1 text-xs bg-gold-500 text-white rounded hover:bg-gold-600 transition-colors"
+                @click="openQiBreakthroughDialog"
+              >
+                大境界突破
+              </button>
+              <button
+                v-else-if="characterStore.needQiBreakthrough"
                 class="px-2 py-1 text-xs bg-gold-500 text-white rounded hover:bg-gold-600 transition-colors"
                 @click="handleQiBreakthrough"
               >
@@ -113,7 +120,14 @@
             <div class="flex items-center space-x-2">
               <span class="text-ink-600 text-xs">{{ currentBodyLevelInfo?.levelInfo?.name || '未入门' }}</span>
               <button
-                v-if="characterStore.needBodyBreakthrough"
+                v-if="characterStore.needBodyRealmBreakthrough"
+                class="px-2 py-1 text-xs bg-gold-500 text-white rounded hover:bg-gold-600 transition-colors"
+                @click="openBodyBreakthroughDialog"
+              >
+                大境界突破
+              </button>
+              <button
+                v-else-if="characterStore.needBodyBreakthrough"
                 class="px-2 py-1 text-xs bg-gold-500 text-white rounded hover:bg-gold-600 transition-colors"
                 @click="handleBodyBreakthrough"
               >
@@ -163,8 +177,12 @@
           <span class="text-blue-600 font-medium">{{ formatNumber(character?.stats.totalSpiritualQiGained || 0) }}</span>
         </div>
         <div class="flex justify-between">
-          <span class="text-ink-600">累积炼体经验：</span>
-          <span class="text-orange-600 font-medium">{{ formatNumber(character?.stats.totalSpiritualStonesGained || 0) }}</span>
+          <span class="text-ink-600">突破次数：</span>
+          <span class="text-ink-800 font-medium">{{ character?.stats.breakthroughAttempts || 0 }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-ink-600">成功突破：</span>
+          <span class="text-green-600 font-medium">{{ character?.stats.successfulBreakthroughs || 0 }}</span>
         </div>
 
       </div>
@@ -188,13 +206,95 @@
         </div>
       </div>
     </div>
+
+    <!-- 测试面板 (开发用) -->
+    <div class="card p-3 md:p-4 bg-yellow-50 border-yellow-200" v-if="showTestPanel">
+      <h3 class="font-serif font-semibold text-ink-800 mb-2 md:mb-3 text-sm md:text-base">
+        🧪 测试工具
+      </h3>
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <button
+          @click="characterStore.addTestQiExperience()"
+          class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        >
+          +练气经验
+        </button>
+        <button
+          @click="characterStore.addTestBodyExperience()"
+          class="px-2 py-1 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+        >
+          +炼体经验
+        </button>
+        <button
+          @click="characterStore.addTestSpiritCrystals()"
+          class="px-2 py-1 bg-gold-500 text-white rounded hover:bg-gold-600 transition-colors"
+        >
+          +灵晶
+        </button>
+        <button
+          @click="characterStore.addTestEnlightenmentExperience('metal')"
+          class="px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+        >
+          +金之道
+        </button>
+        <button
+          @click="characterStore.fillCurrentLevelExperience()"
+          class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors col-span-2"
+        >
+          一键满经验
+        </button>
+      </div>
+      <div class="mt-2 text-center">
+        <button
+          @click="showTestPanel = false"
+          class="px-3 py-1 text-xs text-yellow-700 hover:text-yellow-900"
+        >
+          隐藏测试面板
+        </button>
+      </div>
+    </div>
+
+    <!-- 显示测试面板按钮 (开发用) -->
+    <div class="text-center" v-if="!showTestPanel">
+      <button
+        @click="showTestPanel = true"
+        class="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded"
+      >
+        🧪 显示测试工具
+      </button>
+    </div>
+
+    <!-- 突破弹窗 -->
+    <BreakthroughDialog
+      :show="showQiBreakthroughDialog"
+      :cultivation-type="'qi'"
+      @close="closeQiBreakthroughDialog"
+      @success="onBreakthroughSuccess"
+      @failure="onBreakthroughFailure"
+    />
+
+    <BreakthroughDialog
+      :show="showBodyBreakthroughDialog"
+      :cultivation-type="'body'"
+      @close="closeBodyBreakthroughDialog"
+      @success="onBreakthroughSuccess"
+      @failure="onBreakthroughFailure"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import BreakthroughDialog from './BreakthroughDialog.vue'
 const characterStore = useCharacterStore()
+const gameStore = useGameStore()
 const { formatNumber, formatPercentage } = useNumberFormatter()
 const { formatTime } = useTimeFormatter()
+
+// 弹窗状态
+const showQiBreakthroughDialog = ref(false)
+const showBodyBreakthroughDialog = ref(false)
+const showTestPanel = ref(false)
 
 // 计算属性
 const character = computed(() => characterStore.character)
@@ -232,17 +332,41 @@ const nextBodyLevelExp = computed(() => {
   return currentBodyLevelInfo.value?.levelInfo?.requiredExp || 0
 })
 
-// 突破处理函数
+// 小等级突破处理函数
 const handleQiBreakthrough = () => {
   // 暂时只显示提示，突破功能待实现
-  const gameStore = useGameStore()
   gameStore.addMessage('练气突破功能暂未开放，敬请期待！', 'info')
 }
 
 const handleBodyBreakthrough = () => {
   // 暂时只显示提示，突破功能待实现
-  const gameStore = useGameStore()
   gameStore.addMessage('炼体突破功能暂未开放，敬请期待！', 'info')
+}
+
+// 大境界突破弹窗函数
+const openQiBreakthroughDialog = () => {
+  showQiBreakthroughDialog.value = true
+}
+
+const closeQiBreakthroughDialog = () => {
+  showQiBreakthroughDialog.value = false
+}
+
+const openBodyBreakthroughDialog = () => {
+  showBodyBreakthroughDialog.value = true
+}
+
+const closeBodyBreakthroughDialog = () => {
+  showBodyBreakthroughDialog.value = false
+}
+
+// 突破结果处理
+const onBreakthroughSuccess = (result: any) => {
+  gameStore.addMessage('🎉 突破成功！恭喜进入新境界！', 'success')
+}
+
+const onBreakthroughFailure = (result: any) => {
+  gameStore.addMessage('💔 突破失败，请继续修炼！', 'error')
 }
 
 
